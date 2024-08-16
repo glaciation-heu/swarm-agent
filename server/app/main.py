@@ -4,25 +4,27 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from prometheus_fastapi_instrumentator import Instrumentator
 
-from . import example, items
-
+# from . import example, items
+from app import routers
 
 class CustomFastAPI(FastAPI):
     def openapi(self) -> Dict[str, Any]:
         if self.openapi_schema:
             return self.openapi_schema
         openapi_schema = get_openapi(
-            title="Template web service",
-            version="0.0.0",
-            description="This is a template of a web service",
+            title="Swarm Agent",
+            version="0.1",
+            description="This service implements ACO algorithm for data search and movement",
             contact={
-                "name": "HIRO-MicroDataCenters",
-                "email": "all-hiro@hiro-microdatacenters.nl",
+                "name": "Lakeside Labs",
+                "email": "chepizhko@lakeside-labs.com",
             },
             license_info={
-                "name": "MIT",
-                "url": "https://github.com/HIRO-MicroDataCenters-BV"
-                "/template-python/blob/main/LICENSE",
+                "name": "MIT License",
+                "url": (
+                    "https://github.com/glaciation-heu"
+                    "/glaciation-metadata-service/blob/main/LICENSE"
+                ),
             },
             routes=self.routes,
         )
@@ -31,10 +33,10 @@ class CustomFastAPI(FastAPI):
 
 
 app = CustomFastAPI()
+app.include_router(routers.router)
+# app.include_router(items.routes.router)
 
 
 Instrumentator().instrument(app).expose(app)
 
 
-app.include_router(example.router)
-app.include_router(items.routes.router)
