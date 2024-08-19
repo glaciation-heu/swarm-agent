@@ -1,0 +1,6 @@
+{
+    "p":0.1,
+    "ttl":25,
+    "w_exploit":0.5,
+    "t_exploration":50
+}

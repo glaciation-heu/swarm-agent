@@ -8,7 +8,8 @@ from fastapi import APIRouter
 from starlette.status import HTTP_303_SEE_OTHER
 from starlette.responses import RedirectResponse
 
-from app.utils import get_keyword_from_query
+# from app.utils import get_keyword_from_query
+from app.swarm_agent import SwarmAgent
 
 router = APIRouter()
 
@@ -29,8 +30,9 @@ async def receive_query(
 ) -> str:
     """Get a query and create a keyword out of it!"""
     
-    keyword = get_keyword_from_query(query)
+    # keyword = get_keyword_from_query(query)
+    swarm_agent = SwarmAgent(query, "app/parameters.json")
     
-    return keyword
+    return swarm_agent.keyword
     
         
