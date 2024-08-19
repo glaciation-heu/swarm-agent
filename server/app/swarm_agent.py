@@ -1,8 +1,8 @@
 import re
 import json
 import os
-
-
+import requests
+from urllib.parse import urlencode
 
 class SwarmAgent:
     def __init__(self, query: str, parameters_file: str):
@@ -60,3 +60,25 @@ class SwarmAgent:
             keyword += "_" + q_obj.split("^^")[0].replace('"', "")
 
         return keyword
+    
+    def local_query(self):
+        
+        params = {"query": self.query}
+        encoded_query = urlencode(params)
+        base_url = "http://127.0.0.1:8001/api/v0/graph"
+        full_url = f"{base_url}?{encoded_query}"
+        
+        print(full_url)
+
+        
+        response = requests.get(full_url)
+        
+        print(response)
+        
+        return response
+    
+    def step(self):
+        response = self.local_query()
+        return response
+
+

@@ -34,6 +34,7 @@ class CustomFastAPI(FastAPI):
 
 app = CustomFastAPI()
 app.include_router(routers.router)
+
 # app.include_router(items.routes.router)
 
 

@@ -28,11 +28,11 @@ async def read_root() -> RedirectResponse:
 async def receive_query(
     query: str,
 ) -> str:
-    """Get a query and create a keyword out of it!"""
+    """Receive query, create Swarm Agent, make a step"""
     
-    # keyword = get_keyword_from_query(query)
     swarm_agent = SwarmAgent(query, "app/parameters.json")
+    response = swarm_agent.step()
     
-    return swarm_agent.keyword
+    return dumps(response.json()) #swarm_agent.keyword
     
         
