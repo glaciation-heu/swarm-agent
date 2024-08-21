@@ -91,11 +91,7 @@ class SwarmAgent:
         base_url = "http://127.0.0.1:8001/api/v0/graph"
         full_url = f"{base_url}?{encoded_query}"
 
-        print(full_url)
-
         response = requests.get(full_url)
-
-        print(response)
 
         return response
 
@@ -112,12 +108,32 @@ class SwarmAgent:
                 "neighbors"
             ]:
                 neighbors_dict[neighbor["neighbor_id"]] = neighbor["pheromone_value"]
-                print(neighbor["neighbor_id"], neighbor["pheromone_value"])
             self.pheromone_table[keyword] = neighbors_dict
+
+
+    def getGoodnessValues(
+        self, keyword
+        ):
+
+        goodness_values = []
+        
+        for neighbor in self.pheromone_table[keyword]:
+            
+                goodness_values.append(
+                    self.pheromone_table[keyword][
+                        neighbor
+                    ] 
+                    * self.parameters["beta"]
+            )   
+
+        return goodness_values
+
 
     def step(self):
         response = self.local_query()
         self.get_neighbor_pheromones()
-        print("pheromone_table", self.pheromone_table)
-        print("self.keyword:", self.keyword)
+        print("pheromone_table[{keyword}]".format(keyword=self.keyword), self.pheromone_table[self.keyword])
+        goodness_values=self.getGoodnessValues(self.keyword)
+        print(goodness_values)
+        
         return response
