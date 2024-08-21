@@ -22,6 +22,7 @@ class SwarmAgent:
         self.parameters = self.load_parameters(parameters_file)
         self.keyword = self.transform_query_to_keyword(query)
         self.visited_nodes=[]
+        self.pheromone_table = {}
 
     def load_parameters(self, file_path: str) -> dict:
         """
@@ -80,18 +81,25 @@ class SwarmAgent:
         return response
     
     def get_neighbor_pheromones(self):
+        """_summary_
+        Reads pheromone table from a MongoDB database to appropriate variable
+        """
 
         client = MongoClient('localhost', 27017)
         db = client['SwarmAgent']
-        collection = db['Node']
-        node = collection.find_one({"node_id": "node_1"})
-        for neighbor in node["neighbors"]:
-            print(neighbor["neighbor_id"], neighbor["keywords"])
-            
+        for keyword in db.pheromone_table.distinct("keyword"):
+            neighbors_dict = {}
+            for neighbor in db["pheromone_table"].find_one({"keyword":keyword})["neighbors"]:
+                neighbors_dict[neighbor["neighbor_id"]] = neighbor["pheromone_value"]
+                print(neighbor["neighbor_id"], neighbor["pheromone_value"]) 
+            self.pheromone_table[keyword] = neighbors_dict
+
+
     
     def step(self):
         response = self.local_query()
         self.get_neighbor_pheromones()
+        print("pheromone_table", self.pheromone_table)
         return response
 
 
