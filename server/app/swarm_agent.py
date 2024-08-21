@@ -3,6 +3,7 @@ import json
 import os
 import requests
 from urllib.parse import urlencode
+from pymongo import MongoClient
 
 class SwarmAgent:
     def __init__(self, query: str, parameters_file: str):
@@ -20,6 +21,7 @@ class SwarmAgent:
         self.query = query
         self.parameters = self.load_parameters(parameters_file)
         self.keyword = self.transform_query_to_keyword(query)
+        self.visited_nodes=[]
 
     def load_parameters(self, file_path: str) -> dict:
         """
@@ -77,8 +79,19 @@ class SwarmAgent:
         
         return response
     
+    def get_neighbor_pheromones(self):
+
+        client = MongoClient('localhost', 27017)
+        db = client['SwarmAgent']
+        collection = db['Node']
+        node = collection.find_one({"node_id": "node_1"})
+        for neighbor in node["neighbors"]:
+            print(neighbor["neighbor_id"], neighbor["keywords"])
+            
+    
     def step(self):
         response = self.local_query()
+        self.get_neighbor_pheromones()
         return response
 
 
