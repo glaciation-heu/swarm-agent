@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from io import StringIO
-from json import dumps
+from json import dumps, loads
 
 from fastapi import APIRouter
 
@@ -10,6 +10,8 @@ from starlette.responses import RedirectResponse
 
 # from app.utils import get_keyword_from_query
 from app.swarm_agent import SwarmAgent
+
+from app.message import Message
 
 router = APIRouter()
 
@@ -35,4 +37,22 @@ async def receive_query(
     
     return dumps(response.json()) #swarm_agent.keyword
     
-        
+@router.post(
+    "/api/v0/graph",
+)
+async def receive_message(
+    message: Message,
+) -> str:
+    """Receive message, parse it, create Swarm Agent, make a step"""
+    
+    
+    print(message)
+    print(message.sparql_query)
+    
+    # message_dict = loads(message)
+    query = message.sparql_query
+    
+    swarm_agent = SwarmAgent(query, "app/parameters.json", visited_nodes=message.visited_nodes)
+    response = swarm_agent.step()
+    
+    return dumps(response.json()) #swarm_agent.keyword

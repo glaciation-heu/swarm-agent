@@ -5,10 +5,11 @@ import requests
 from urllib.parse import urlencode
 from pymongo import MongoClient
 from rdflib.plugins.sparql.parser import parseQuery
-
+from datetime import datetime, timezone
+from typing import List
 
 class SwarmAgent:
-    def __init__(self, query: str, parameters_file: str):
+    def __init__(self, query: str, parameters_file: str, visited_nodes: List[str] = []):
         """
         The function initializes an object with a query, parameters loaded from a file
         and a keyword is derived from the query.
@@ -23,8 +24,11 @@ class SwarmAgent:
         self.query = query
         self.parameters = self.load_parameters(parameters_file)
         self.keyword = self.transform_query_to_keyword(query)
-        self.visited_nodes = []
+        self.visited_nodes = visited_nodes
         self.pheromone_table = {}
+        now_utc = datetime.now(timezone.utc)
+        self.unique_id = now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
+        self.time_to_live = self.parameters["ttl"]
         
 
     def load_parameters(self, file_path: str) -> dict:

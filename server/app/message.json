@@ -1,0 +1,7 @@
+{
+  "unique_id": "12345",
+  "sparql_query": "?subject <http://dellemc.com:8080/icv/driverSeatLocation> \"Left\"^^<https://schema.org/steeringPosition>.",
+  "visited_nodes": [],
+  "time_to_live": null,
+  "keyword": ""
+}
