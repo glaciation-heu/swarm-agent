@@ -53,7 +53,6 @@ class SwarmAgent:
             raise FileNotFoundError(f"The file {file_path} does not exist.")
         with open(file_path, "r") as file:
             return json.load(file)
-
     
     def transform_query_to_keyword(query):
         """
@@ -150,10 +149,6 @@ class SwarmAgent:
 
     def step(self):
         response = self.local_query()
-        
-        # print("Response head:", response.head)
-        print("Response dir:", dir(response))
-        
         self.get_neighbor_pheromones()
         print("pheromone_table[{keyword}]".format(keyword=self.keyword), self.pheromone_table[self.keyword])
         goodness_values=self.getGoodnessValues(self.keyword)
