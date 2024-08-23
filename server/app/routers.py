@@ -55,4 +55,8 @@ async def receive_message(
     swarm_agent = SwarmAgent(query, "app/parameters.json", visited_nodes=message.visited_nodes)
     response = swarm_agent.step()
     
-    return dumps(response.json()) #swarm_agent.keyword
+    nice_str = ""
+    for binding in response.json()['results']['bindings']:
+        nice_str+=str(binding) + " "
+    
+    return nice_str #response.json()['results']['bindings'] #swarm_agent.keyword
