@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 class Message(BaseModel):
+    message_type: str
     unique_id: str
     sparql_query: str
     visited_nodes: list
