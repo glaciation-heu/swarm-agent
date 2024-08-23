@@ -54,7 +54,7 @@ class SwarmAgent:
         with open(file_path, "r") as file:
             return json.load(file)
     
-    def transform_query_to_keyword(query):
+    def transform_query_to_keyword(self, query):
         """
         The function `transform_query_to_keyword` extracts keywords from a query string.
 
