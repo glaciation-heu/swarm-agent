@@ -25,7 +25,7 @@ class CustomFastAPI(FastAPI):
                 "name": "MIT License",
                 "url": (
                     "https://github.com/glaciation-heu"
-                    "/glaciation-metadata-service/blob/main/LICENSE"
+                    "/swarm-agent/blob/main/LICENSE"
                 ),
             },
             routes=self.routes,
