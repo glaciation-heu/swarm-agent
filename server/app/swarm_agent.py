@@ -125,14 +125,16 @@ class SwarmAgent:
         Reads pheromone table from a MongoDB database to appropriate variable
         """
 
-        client = MongoClient("localhost", 27017)
+        client: MongoClient[Dict[str, Any]] = MongoClient("localhost", 27017)
         db = client["SwarmAgent"]
         for keyword in db.pheromone_table.distinct("keyword"):
             neighbors_dict = {}
-            for neighbor in db["pheromone_table"].find_one({"keyword": keyword})[
-                "neighbors"
-            ]:
-                neighbors_dict[neighbor["neighbor_id"]] = neighbor["pheromone_value"]
+            db_keyword = db["pheromone_table"].find_one({"keyword": keyword})
+            if db_keyword is not None:
+                for neighbor in db_keyword["neighbors"]:
+                    neighbors_dict[neighbor["neighbor_id"]] = neighbor[
+                        "pheromone_value"
+                    ]
             self.pheromone_table[keyword] = neighbors_dict
 
     def getGoodnessValues(self, keyword):
