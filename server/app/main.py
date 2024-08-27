@@ -7,6 +7,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 # from . import example, items
 from app import routers
 
+
 class CustomFastAPI(FastAPI):
     def openapi(self) -> Dict[str, Any]:
         if self.openapi_schema:
@@ -14,7 +15,8 @@ class CustomFastAPI(FastAPI):
         openapi_schema = get_openapi(
             title="Swarm Agent",
             version="0.1.0",
-            description="This service implements ACO algorithm for data search and movement",
+            description="This service implements ACO algorithm for data \
+                search and movement",
             contact={
                 "name": "Lakeside Labs",
                 "email": "chepizhko@lakeside-labs.com",
@@ -37,7 +39,4 @@ app.include_router(routers.router)
 
 # app.include_router(items.routes.router)
 
-
 Instrumentator().instrument(app).expose(app)
-
-
