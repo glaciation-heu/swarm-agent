@@ -8,6 +8,8 @@ from rdflib.plugins.sparql.parser import parseQuery
 from datetime import datetime, timezone
 from typing import List
 
+from app.message import Message
+
 from app.schemas import (
     ResponseHead,
     ResponseResults,
@@ -145,13 +147,42 @@ class SwarmAgent:
             )   
 
         return goodness_values
+    
+    def form_backward_ant_message(self):
+        backward_message = ""
+        return backward_message
 
+    def create_forward_message(self) -> Message:
+        
+        message=Message(
+                message_type="forward",
+                unique_id="my_unique_id",
+                sparql_query = self.query,
+                visited_nodes = self.visited_nodes,
+                time_to_live = self.time_to_live-1, 
+                keyword = self.keyword
+        )
+        print("from create ", message.message_type, flush=True)
+        return message
 
     def step(self):
+        this_node = "node1" # one should get the actual node id from the MongoDB database
+        self.visited_nodes.append(this_node)
         response = self.local_query()
         self.get_neighbor_pheromones()
         print("pheromone_table[{keyword}]".format(keyword=self.keyword), self.pheromone_table[self.keyword])
         goodness_values=self.getGoodnessValues(self.keyword)
+        # here we will implement first explore strategy and then the choice between strategies.
         print(goodness_values)
+        
+        forward_message = self.create_forward_message()
+        print("forward_message =",forward_message.model_dump_json())
+        
+        # we need to modify the message
+        # update visited nodes list!
+        
+        # if request fulfilled create a backward ant message
+        
+        # once proper node is chosen we need to send the message further
         
         return response

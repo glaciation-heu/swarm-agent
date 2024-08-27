@@ -13,6 +13,14 @@ from app.swarm_agent import SwarmAgent
 
 from app.message import Message
 
+from app.schemas import (
+    ResponseHead,
+    ResponseResults,
+    SearchResponse,
+    SPARQLQuery,
+    UpdateRequestBody,
+)
+
 router = APIRouter()
 
 @router.get(
@@ -43,10 +51,13 @@ async def receive_query(
 async def receive_message(
     message: Message,
 ) -> str:
-    """Receive message, parse it, create Swarm Agent, make a step"""
+    """
+    Receive message, parse it, create Swarm Agent, make a step.
+    We can use the same function to receive messages from both Metadata Service and other Swarm Agents.
+    """
     
     
-    print(message)
+    print(message.message_type)
     print(message.sparql_query)
     
     # message_dict = loads(message)
