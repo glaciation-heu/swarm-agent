@@ -1,6 +1,6 @@
 apiVersion: v2
-name: server
-description: Web server
+name: swarm-agent
+description: GLACIATION Swarm Agent
 type: application
 version: ""
 appVersion: ""
