@@ -24,8 +24,7 @@ class CustomFastAPI(FastAPI):
             license_info={
                 "name": "MIT License",
                 "url": (
-                    "https://github.com/glaciation-heu"
-                    "/swarm-agent/blob/main/LICENSE"
+                    "https://github.com/glaciation-heu" "/swarm-agent/blob/main/LICENSE"
                 ),
             },
             routes=self.routes,
