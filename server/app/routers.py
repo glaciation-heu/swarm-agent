@@ -67,7 +67,7 @@ async def receive_message(
     response = swarm_agent.step()
 
     nice_str = ""
-    for binding in response.json()["results"]["bindings"]:
+    for binding in response["results"]["bindings"]:
         nice_str += str(binding) + " "
 
-    return nice_str  # response.json()['results']['bindings'] #swarm_agent.keyword
+    return nice_str  # response['results']['bindings'] #swarm_agent.keyword

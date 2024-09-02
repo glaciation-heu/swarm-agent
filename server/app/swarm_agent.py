@@ -125,25 +125,27 @@ class SwarmAgent:
         """_summary_
         Reads pheromone table from a MongoDB database to appropriate variable
         """
-        pheromone_query = """
-            SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {
-                GRAPH <swarm-agent:pheromones> {
-                    ?entry <swarm-agent:hasKeyword> ?keyword .
-                    ?entry <swarm-agent:hasNode> ?neighbor_id .
-                    ?entry <swarm-agent:hasPheromone> ?pheromone_value .
-                }
-            }
-        """
+        pheromone_query = (
+            "SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {"
+            "GRAPH <swarm-agent:pheromones> {"
+            "?entry <swarm-agent:hasKeyword> ?keyword ."
+            "?entry <swarm-agent:hasNode> ?neighbor_id ."
+            "?entry <swarm-agent:hasPheromone> ?pheromone_value ."
+            "}"
+            "}"
+        )
 
         results = self.local_query(pheromone_query)
         for result in results["results"]["bindings"]:
             try:
-                self.pheromone_table[result["keyword"]][result["neighbor_id"]] = result[
-                    "pheromone_value"
-                ]
+                self.pheromone_table[result["keyword"]["value"]][
+                    result["neighbor_id"]["value"]
+                ] = float(result["pheromone_value"]["value"])
             except KeyError:
-                self.pheromone_table[result["keyword"]] = {
-                    result["neighbor_id"]: result["pheromone_value"]
+                self.pheromone_table[result["keyword"]["value"]] = {
+                    result["neighbor_id"]["value"]: float(
+                        result["pheromone_value"]["value"]
+                    )
                 }
 
     def getGoodnessValues(self, keyword):
