@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 import requests
-from pymongo import MongoClient
 from rdflib.plugins.sparql.parser import parseQuery
 
 from app.message import Message
@@ -106,36 +105,46 @@ class SwarmAgent:
 
         return local_predicate, local_object
 
-    def local_query(self):
+    def local_query(self, query: str | None = None) -> Any:
         """
         Queries Local Metadata service
         """
+        if query is None:
+            query = self.query
 
-        params = {"query": self.query}
+        params = {"query": query}
         encoded_query = urlencode(params)
         base_url = "http://metadata-service:80/api/v0/graph"
         full_url = f"{base_url}?{encoded_query}"
 
         response = requests.get(full_url)
 
-        return response
+        return response.json()
 
     def get_neighbor_pheromones(self):
         """_summary_
         Reads pheromone table from a MongoDB database to appropriate variable
         """
+        pheromone_query = """
+            SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {
+                GRAPH <swarm-agent:pheromones> {
+                    ?entry <swarm-agent:hasKeyword> ?keyword .
+                    ?entry <swarm-agent:hasNode> ?neighbor_id .
+                    ?entry <swarm-agent:hasPheromone> ?pheromone_value .
+                }
+            }
+        """
 
-        client: MongoClient[Dict[str, Any]] = MongoClient("localhost", 27017)
-        db = client["SwarmAgent"]
-        for keyword in db.pheromone_table.distinct("keyword"):
-            neighbors_dict = {}
-            db_keyword = db["pheromone_table"].find_one({"keyword": keyword})
-            if db_keyword is not None:
-                for neighbor in db_keyword["neighbors"]:
-                    neighbors_dict[neighbor["neighbor_id"]] = neighbor[
-                        "pheromone_value"
-                    ]
-            self.pheromone_table[keyword] = neighbors_dict
+        results = self.local_query(pheromone_query)
+        for result in results["results"]["bindings"]:
+            try:
+                self.pheromone_table[result["keyword"]][result["neighbor_id"]] = result[
+                    "pheromone_value"
+                ]
+            except KeyError:
+                self.pheromone_table[result["keyword"]] = {
+                    result["neighbor_id"]: result["pheromone_value"]
+                }
 
     def getGoodnessValues(self, keyword):
         goodness_values = []
