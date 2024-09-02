@@ -113,7 +113,7 @@ class SwarmAgent:
 
         params = {"query": self.query}
         encoded_query = urlencode(params)
-        base_url = "http://127.0.0.1:8001/api/v0/graph"
+        base_url = "http://metadata-service:80/api/v0/graph"
         full_url = f"{base_url}?{encoded_query}"
 
         response = requests.get(full_url)
