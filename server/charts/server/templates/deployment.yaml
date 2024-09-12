@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: {{ .Values.controllerKind | default "Deployment" }}
 metadata:
   name: {{ include "app.fullname" . }}
   labels:

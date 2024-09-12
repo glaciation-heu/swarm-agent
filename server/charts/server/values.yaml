@@ -38,3 +38,5 @@ readinessProbe:
     port: http
 
 ingressHostName: swarm-agent
+
+controllerKind: DaemonSet
