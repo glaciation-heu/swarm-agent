@@ -193,8 +193,6 @@ class SwarmAgent:
         forward_message = self.create_forward_message()
         print("forward_message =", forward_message.model_dump_json())
 
-        print(os.environ)
-
         # we need to modify the message
         # update visited nodes list!
 

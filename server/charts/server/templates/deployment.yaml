@@ -45,10 +45,6 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
-          - name: MY_POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
           - name: MY_POD_NAMESPACE
             valueFrom:
               fieldRef:
@@ -57,10 +53,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.podIP
-          - name: MY_POD_IPs
-            valueFrom:
-              fieldRef:
-                fieldPath: status.podIPs
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
