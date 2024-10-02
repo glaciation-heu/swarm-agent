@@ -44,7 +44,7 @@ async def read_root() -> RedirectResponse:
 
 
 @router.post(
-    "/api/v0/swarm_agent",
+    "/api/v0/create_agent",
 )
 async def receive_message(
     message: Message,
@@ -55,8 +55,7 @@ async def receive_message(
     Metadata Service and other Swarm Agents.
     """
 
-    print(message.message_type)
-    print(message.sparql_query)
+    print(message.model_dump())
 
     swarm_agent = SwarmAgent(message, "app/parameters.json")
     response = swarm_agent.step()
@@ -66,3 +65,9 @@ async def receive_message(
         nice_str += str(binding) + " "
 
     return nice_str  # response['results']['bindings'] #swarm_agent.keyword
+
+
+# TODO make sure that create_agent endpoint does not have to wait for response,
+#      just creates the forward/backward agent
+
+# TODO aggregate the results carried back by backward ants

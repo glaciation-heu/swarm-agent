@@ -9,9 +9,9 @@ info:
   license:
     name: MIT License
     url: https://github.com/glaciation-heu/swarm-agent/blob/main/LICENSE
-  version: 0.2.11
+  version: 0.2.12
 paths:
-  /api/v0/swarm_agent:
+  /api/v0/create_agent:
     post:
       summary: Receive Message
       description: 'Receive message, parse it, create Swarm Agent, make a step.
@@ -19,7 +19,7 @@ paths:
         We can use the same function to receive messages from both
 
         Metadata Service and other Swarm Agents.'
-      operationId: receive_message_api_v0_swarm_agent_post
+      operationId: receive_message_api_v0_create_agent_post
       requestBody:
         content:
           application/json:
@@ -33,7 +33,7 @@ paths:
             application/json:
               schema:
                 type: string
-                title: Response Receive Message Api V0 Swarm Agent Post
+                title: Response Receive Message Api V0 Create Agent Post
         '422':
           description: Validation Error
           content:

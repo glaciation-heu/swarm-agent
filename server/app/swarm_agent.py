@@ -44,7 +44,6 @@ class SwarmAgent:
             else message.keyword
         )
         self.visited_nodes = message.visited_nodes
-        self.pheromone_table: Dict[str, Any] = {}
         now_utc = datetime.now(timezone.utc)
         self.unique_id = (
             now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -53,6 +52,8 @@ class SwarmAgent:
         )
         self.time_to_live = message.time_to_live  # self.parameters["ttl"]
         self.neighbors = self.get_swarm_agent_pods()
+        # TODO initialize pheromone table with the neighbor pod IPs
+        self.pheromone_table: Dict[str, Any] = {}
 
     def load_parameters(self, file_path: str) -> Any:
         """
@@ -215,7 +216,7 @@ class SwarmAgent:
         print("from create ", message.message_type, flush=True)
         return message
 
-    def send_message(self, message, ip, port=80, endpoint="api/v0/swarm_agent"):
+    def send_message(self, message, ip, port=80, endpoint="api/v0/create_agent"):
         headers = {"Content-Type": "application/json", "accept": "application/json"}
         url = f"http://{ip}:{port}/{endpoint}"
         requests.post(url, json=message, headers=headers)
@@ -239,10 +240,7 @@ class SwarmAgent:
         forward_message = self.create_forward_message()
         print("forward_message =", forward_message.model_dump())
 
-        if (
-            forward_message.time_to_live is not None
-            and forward_message.time_to_live > 0
-        ):
+        if forward_message.time_to_live > 0:
             self.send_message(forward_message.model_dump(), self.neighbors[0]["ip"])
 
         # we need to modify the message
