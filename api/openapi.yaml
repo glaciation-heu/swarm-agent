@@ -9,7 +9,7 @@ info:
   license:
     name: MIT License
     url: https://github.com/glaciation-heu/swarm-agent/blob/main/LICENSE
-  version: 0.2.9
+  version: 0.2.10
 paths:
   /api/v0/swarm_agent:
     post:
@@ -67,32 +67,30 @@ components:
         message_type:
           type: string
           title: Message Type
+          default: forward
         unique_id:
           type: string
           title: Unique Id
+          default: ''
         sparql_query:
           type: string
           title: Sparql Query
+          default: SELECT * WHERE {?s ?p ?o} LIMIT 10
         visited_nodes:
           items:
             type: string
           type: array
           title: Visited Nodes
+          default: []
         time_to_live:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
           title: Time To Live
+          default: 25
         keyword:
           type: string
           title: Keyword
           default: ''
       type: object
-      required:
-      - message_type
-      - unique_id
-      - sparql_query
-      - visited_nodes
       title: Message
     ValidationError:
       properties:

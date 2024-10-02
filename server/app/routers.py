@@ -58,12 +58,7 @@ async def receive_message(
     print(message.message_type)
     print(message.sparql_query)
 
-    # message_dict = loads(message)
-    query = message.sparql_query
-
-    swarm_agent = SwarmAgent(
-        query, "app/parameters.json", visited_nodes=message.visited_nodes
-    )
+    swarm_agent = SwarmAgent(message, "app/parameters.json")
     response = swarm_agent.step()
 
     nice_str = ""

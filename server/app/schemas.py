@@ -13,11 +13,11 @@ class ResponseResults(BaseModel):
 
 
 class Message(BaseModel):
-    message_type: str
-    unique_id: str
-    sparql_query: str
-    visited_nodes: List[str]
-    time_to_live: int | None = None
+    message_type: str = "forward"
+    unique_id: str = ""
+    sparql_query: str = "SELECT * WHERE {?s ?p ?o} LIMIT 10"
+    visited_nodes: List[str] = []
+    time_to_live: int = 25
     keyword: str = ""
 
 

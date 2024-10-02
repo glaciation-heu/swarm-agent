@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import json
 import os
@@ -22,7 +22,7 @@ from app.schemas import Message
 
 
 class SwarmAgent:
-    def __init__(self, query: str, parameters_file: str, visited_nodes: List[str] = []):
+    def __init__(self, message: Message, parameters_file: str):
         """
         The function initializes an object with a query, parameters loaded from a file
         and a keyword is derived from the query.
@@ -36,14 +36,22 @@ class SwarmAgent:
         file. File is in json format which is basically a dictionary
         :type parameters_file: str
         """
-        self.query = query
+        self.query = message.sparql_query
         self.parameters = self.load_parameters(parameters_file)
-        self.keyword = self.transform_query_to_keyword(query)
-        self.visited_nodes = visited_nodes
+        self.keyword = (
+            self.transform_query_to_keyword(self.query)
+            if message.keyword == ""
+            else message.keyword
+        )
+        self.visited_nodes = message.visited_nodes
         self.pheromone_table: Dict[str, Any] = {}
         now_utc = datetime.now(timezone.utc)
-        self.unique_id = now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
-        self.time_to_live = self.parameters["ttl"]
+        self.unique_id = (
+            now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
+            if message.unique_id == ""
+            else message.unique_id
+        )
+        self.time_to_live = message.time_to_live  # self.parameters["ttl"]
         self.neighbors = self.get_swarm_agent_pods()
 
     def load_parameters(self, file_path: str) -> Any:
@@ -118,7 +126,7 @@ class SwarmAgent:
 
         swarm_agents = []
         for pod in pods.items:
-            if pod.metadata.pod_ip != os.environ["MY_POD_IP"]:
+            if pod.status.pod_ip != os.environ["MY_POD_IP"]:
                 swarm_agents.append(
                     {
                         "name": pod.metadata.name,
