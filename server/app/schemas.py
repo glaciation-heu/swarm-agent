@@ -11,7 +11,9 @@ class ResponseHead(BaseModel):
 class ResponseResults(BaseModel):
     bindings: list[Dict[str, Any]]
 
+
 # TODO make sure that the response is same as in Metadata Service
+
 
 class Message(BaseModel):
     message_type: str = "forward"
