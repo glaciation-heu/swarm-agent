@@ -207,6 +207,8 @@ class SwarmAgent:
         forward_message = self.create_forward_message()
         print("forward_message =", forward_message.model_dump_json())
 
+        self.get_swarm_agent_pods()
+
         # we need to modify the message
         # update visited nodes list!
 
