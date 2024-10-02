@@ -3,7 +3,7 @@ from fastapi import APIRouter
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_303_SEE_OTHER
 
-from app.message import Message
+from app.schemas import Message
 
 # from app.utils import get_keyword_from_query
 from app.swarm_agent import SwarmAgent

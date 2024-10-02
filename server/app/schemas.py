@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Dict
+from typing import Annotated, Any, Dict, List
 
 from fastapi import Body, Query
 from pydantic import BaseModel
@@ -10,6 +10,15 @@ class ResponseHead(BaseModel):
 
 class ResponseResults(BaseModel):
     bindings: list[Dict[str, Any]]
+
+
+class Message(BaseModel):
+    message_type: str
+    unique_id: str
+    sparql_query: str
+    visited_nodes: List[str]
+    time_to_live: int | None = None
+    keyword: str = ""
 
 
 UpdateRequestBody = Annotated[

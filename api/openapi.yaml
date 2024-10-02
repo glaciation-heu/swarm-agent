@@ -9,7 +9,7 @@ info:
   license:
     name: MIT License
     url: https://github.com/glaciation-heu/swarm-agent/blob/main/LICENSE
-  version: 0.2.8
+  version: 0.2.9
 paths:
   /api/v0/swarm_agent:
     post:

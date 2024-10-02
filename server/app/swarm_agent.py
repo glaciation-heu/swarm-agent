@@ -10,7 +10,7 @@ import requests
 from kubernetes import client, config
 from rdflib.plugins.sparql.parser import parseQuery
 
-from app.message import Message
+from app.schemas import Message
 
 # from app.schemas import (
 #     ResponseHead,
@@ -44,6 +44,7 @@ class SwarmAgent:
         now_utc = datetime.now(timezone.utc)
         self.unique_id = now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
         self.time_to_live = self.parameters["ttl"]
+        self.neighbors = self.get_swarm_agent_pods()
 
     def load_parameters(self, file_path: str) -> Any:
         """
@@ -97,17 +98,35 @@ class SwarmAgent:
         return keyword
 
     def get_swarm_agent_pods(self):
+        """
+        The function `get_swarm_agent_pods` retrieves information about Swarm agent pods
+        in a Kubernetes cluster.
+        :return: The `get_swarm_agent_pods` function returns a list of dictionaries
+        containing information about the Swarm agent pods in the Kubernetes cluster.
+        Each dictionary in the list includes the name and IP address of a Swarm agent
+        pod, excluding the pod with the IP address matching the value of the `MY_POD_IP`
+        environment variable.
+        """
         config.load_incluster_config()
         v1 = client.CoreV1Api()
 
-        label_selector = "app=swarm-agent"
+        label_selector = "app.kubernetes.io/name=swarm-agent"
 
         pods = v1.list_namespaced_pod(
             os.environ["MY_POD_NAMESPACE"], label_selector=label_selector
         )
 
+        swarm_agents = []
         for pod in pods.items:
-            print(f"Pod Name: {pod.metadata.name}, Pod IP: {pod.status.pod_ip}")
+            if pod.metadata.pod_ip != os.environ["MY_POD_IP"]:
+                swarm_agents.append(
+                    {
+                        "name": pod.metadata.name,
+                        "ip": pod.status.pod_ip,
+                    }
+                )
+
+        return swarm_agents
 
     def get_triples_from_query(self, sparql_query):
         parsed_query = parseQuery(sparql_query)
@@ -188,6 +207,11 @@ class SwarmAgent:
         print("from create ", message.message_type, flush=True)
         return message
 
+    def send_message(self, message, ip, port=80, endpoint="api/v0/swarm_agent"):
+        headers = {"Content-Type": "application/json", "accept": "application/json"}
+        url = f"http://{ip}:{port}/{endpoint}"
+        requests.post(url, json=message, headers=headers)
+
     def step(self):
         this_node = (
             "node1"  # one should get the actual node id from the MongoDB database
@@ -207,7 +231,13 @@ class SwarmAgent:
         forward_message = self.create_forward_message()
         print("forward_message =", forward_message.model_dump_json())
 
-        self.get_swarm_agent_pods()
+        if (
+            forward_message.time_to_live is not None
+            and forward_message.time_to_live > 0
+        ):
+            self.send_message(
+                forward_message.model_dump_json(), self.neighbors[0]["ip"]
+            )
 
         # we need to modify the message
         # update visited nodes list!
