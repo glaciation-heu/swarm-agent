@@ -237,15 +237,13 @@ class SwarmAgent:
         print(goodness_values)
 
         forward_message = self.create_forward_message()
-        print("forward_message =", forward_message.model_dump_json())
+        print("forward_message =", forward_message.model_dump())
 
         if (
             forward_message.time_to_live is not None
             and forward_message.time_to_live > 0
         ):
-            self.send_message(
-                forward_message.model_dump_json(), self.neighbors[0]["ip"]
-            )
+            self.send_message(forward_message.model_dump(), self.neighbors[0]["ip"])
 
         # we need to modify the message
         # update visited nodes list!
