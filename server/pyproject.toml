@@ -24,6 +24,7 @@ pymongo = "^4.8.0"
 rdflib = "^7.0.0"
 types-requests = "^2.32.0.20240712"
 email-validator = "^2.2.0"
+kubernetes = "^31.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.12"

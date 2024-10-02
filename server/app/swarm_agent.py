@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from urllib.parse import urlencode
 
 import requests
+from kubernetes import client, config
 from rdflib.plugins.sparql.parser import parseQuery
 
 from app.message import Message
@@ -94,6 +95,19 @@ class SwarmAgent:
             keyword = "all"
 
         return keyword
+
+    def get_swarm_agent_pods(self):
+        config.load_incluster_config()
+        v1 = client.CoreV1Api()
+
+        label_selector = "app=swarm-agent"
+
+        pods = v1.list_namespaced_pod(
+            os.environ["MY_POD_NAMESPACE"], label_selector=label_selector
+        )
+
+        for pod in pods.items:
+            print(f"Pod Name: {pod.metadata.name}, Pod IP: {pod.status.pod_ip}")
 
     def get_triples_from_query(self, sparql_query):
         parsed_query = parseQuery(sparql_query)
