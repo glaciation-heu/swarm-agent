@@ -229,10 +229,17 @@ class SwarmAgent:
         self.visited_nodes.append(this_node)
         response = self.local_query()
         self.get_neighbor_pheromones()
-        logger.debug(
-            "pheromone_table[{keyword}]".format(keyword=self.keyword),
-            self.pheromone_table[self.keyword],
-        )
+        if self.keyword in self.pheromone_table:
+            logger.debug(
+                "pheromone_table[{keyword}]".format(keyword=self.keyword),
+                self.pheromone_table[self.keyword],
+            )
+        else:
+            self.pheromone_table[self.keyword]={1,1}
+            logger.debug(
+                "pheromone_table[{keyword}]".format(keyword=self.keyword),
+                self.pheromone_table[self.keyword],
+            )
         goodness_values = self.getGoodnessValues(self.keyword)
         # here we will implement first explore strategy and then the choice between
         # strategies.
