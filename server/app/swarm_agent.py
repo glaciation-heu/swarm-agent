@@ -12,8 +12,8 @@ from rdflib.plugins.sparql.parser import parseQuery
 
 from loguru import logger
 
-logger.remove()
-logger.add(sys.stderr, level="DEBUG")
+# logger.remove()
+# logger.add(sys.stderr, level="DEBUG")
 
 from app.schemas import Message
 
