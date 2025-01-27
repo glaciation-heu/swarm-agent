@@ -235,7 +235,7 @@ class SwarmAgent:
                 self.pheromone_table[self.keyword],
             )
         else:
-            self.pheromone_table[self.keyword]={1,1}
+            self.pheromone_table[self.keyword] = {1, 1}
             logger.debug(
                 "pheromone_table[{keyword}]".format(keyword=self.keyword),
                 self.pheromone_table[self.keyword],
