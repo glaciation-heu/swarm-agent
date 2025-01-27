@@ -8,12 +8,9 @@ from urllib.parse import urlencode
 
 import requests
 from kubernetes import client, config
+from loguru import logger
 from rdflib.plugins.sparql.parser import parseQuery
 
-from loguru import logger
-
-# logger.remove()
-# logger.add(sys.stderr, level="DEBUG")
 
 from app.schemas import Message
 
