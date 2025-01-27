@@ -54,7 +54,7 @@ jobs:
       - name: Verify OpenAPI spec has been updated
         run: |
           cd "${{ github.workspace }}"
-          poetry run --directory server python ./tools/extract_openapi.py app.main:app --app-dir ./server --out ./api/openapi_generated.yaml --app_version_file ./VERSION
+          poetry run --directory server python ../tools/extract_openapi.py app.main:app --app-dir ../server --out ../api/openapi_generated.yaml --app_version_file ../VERSION
           git diff --exit-code ./api/openapi.yaml ./api/openapi_generated.yaml
 
       # Disabled because we do not need a client yet
