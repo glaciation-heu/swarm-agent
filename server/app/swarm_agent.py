@@ -11,7 +11,6 @@ from kubernetes import client, config
 from loguru import logger
 from rdflib.plugins.sparql.parser import parseQuery
 
-
 from app.schemas import Message
 
 # from app.schemas import (
