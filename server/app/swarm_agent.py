@@ -10,6 +10,11 @@ import requests
 from kubernetes import client, config
 from rdflib.plugins.sparql.parser import parseQuery
 
+from loguru import logger
+
+logger.remove()
+logger.add(sys.stderr, level="DEBUG")
+
 from app.schemas import Message
 
 # from app.schemas import (
@@ -213,7 +218,7 @@ class SwarmAgent:
             time_to_live=self.time_to_live - 1,
             keyword=self.keyword,
         )
-        print("from create ", message.message_type, flush=True)
+        logger.debug("from create ", message.message_type)
         return message
 
     def send_message(self, message, ip, port=80, endpoint="api/v0/create_agent"):
@@ -228,7 +233,7 @@ class SwarmAgent:
         self.visited_nodes.append(this_node)
         response = self.local_query()
         self.get_neighbor_pheromones()
-        print(
+        logger.debug(
             "pheromone_table[{keyword}]".format(keyword=self.keyword),
             self.pheromone_table[self.keyword],
         )
