@@ -235,10 +235,11 @@ class SwarmAgent:
                 self.pheromone_table[self.keyword],
             )
         else:
-            self.pheromone_table[self.keyword] = {1, 1}
+            self.pheromone_table[self.keyword] = {1: 1}
             logger.debug(
-                "pheromone_table[{keyword}]".format(keyword=self.keyword),
-                self.pheromone_table[self.keyword],
+                "pheromone_table[{keyword}] = {content}",
+                keyword=self.keyword,  
+                content=self.pheromone_table[self.keyword],
             )
         goodness_values = self.getGoodnessValues(self.keyword)
         # here we will implement first explore strategy and then the choice between
