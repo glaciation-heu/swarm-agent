@@ -238,7 +238,7 @@ class SwarmAgent:
             self.pheromone_table[self.keyword] = {1: 1}
             logger.debug(
                 "pheromone_table[{keyword}] = {content}",
-                keyword=self.keyword,  
+                keyword=self.keyword,
                 content=self.pheromone_table[self.keyword],
             )
         goodness_values = self.getGoodnessValues(self.keyword)
