@@ -587,3 +587,6 @@ MigrationBackup/
 .helm
 
 .dist
+server/app/test_mongodb.ipynb
+server/app/test_request.ipynb
+server/app/test_sparql_query_parsing.ipynb
