@@ -214,7 +214,7 @@ class SwarmAgent:
             time_to_live=self.time_to_live - 1,
             keyword=self.keyword,
         )
-        logger.debug("from create ", message.message_type)
+        logger.debug("from create {message_type}", message_type=message.message_type)
         return message
 
     def send_message(self, message, ip, port=80, endpoint="api/v0/create_agent"):
