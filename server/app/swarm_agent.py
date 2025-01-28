@@ -244,10 +244,12 @@ class SwarmAgent:
         goodness_values = self.getGoodnessValues(self.keyword)
         # here we will implement first explore strategy and then the choice between
         # strategies.
-        print(goodness_values)
+        logger.debug(
+            "goodness_values={goodness_values}", goodness_values=goodness_values
+        )
 
         forward_message = self.create_forward_message()
-        print("forward_message =", forward_message.model_dump())
+        logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
         if forward_message.time_to_live > 0:
             self.send_message(forward_message.model_dump(), self.neighbors[0]["ip"])
