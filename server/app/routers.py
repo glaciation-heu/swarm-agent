@@ -58,7 +58,7 @@ async def receive_message(
     print(message.model_dump())
 
     swarm_agent = SwarmAgent(message, "app/parameters.json")
-    response = swarm_agent.step()
+    response = await swarm_agent.step()
 
     nice_str = ""
     for binding in response["results"]["bindings"]:

@@ -222,7 +222,7 @@ class SwarmAgent:
         url = f"http://{ip}:{port}/{endpoint}"
         requests.post(url, json=message, headers=headers)
 
-    def step(self):
+    async def step(self):
         this_node = (
             "node1"  # one should get the actual node id from the MongoDB database
         )
