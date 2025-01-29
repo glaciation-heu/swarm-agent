@@ -4,33 +4,35 @@ set -e  # Exit immediately if a command exits with a non-zero status.
 
 # 1. Run formatting check with Poetry
 echo "Checking formatting requirements with Poetry..."
-
-poetry run mypy server
+cd server
+poetry run mypy .
 if [ $? -ne 0 ]; then
     echo "Formatting issues found. Please run 'poetry run mypy . --check --diff' to fix them."
     exit 1
 fi
 
-poetry run isort server --check --diff
+poetry run isort . --check --diff
 
 if [ $? -ne 0 ]; then
     echo "Formatting issues found. Please run 'poetry run isort . --check --diff' to fix them."
     exit 1
 fi
 
-poetry run flake8 server
+poetry run flake8 .
 
 if [ $? -ne 0 ]; then
     echo "Formatting issues found. Please run 'poetry run flake8 .' to fix them."
     exit 1
 fi
 
-poetry run black --check server
+poetry run black --check .
 
 if [ $? -ne 0 ]; then
     echo "Formatting issues found. Please run 'poetry run black .' to fix them."
     exit 1
 fi
+
+cd ..
 
 # 2. Increment version in VERSION file
 VERSION_FILE="VERSION"
