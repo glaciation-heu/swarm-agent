@@ -32,10 +32,14 @@ livenessProbe:
   httpGet:
     path: /
     port: http
+  periodSeconds: 60
+  timeoutSeconds: 40
 readinessProbe:
   httpGet:
     path: /
     port: http
+  periodSeconds: 60
+  timeoutSeconds: 40
 
 ingressHostName: swarm-agent
 

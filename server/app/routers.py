@@ -1,4 +1,7 @@
 # from json import dumps
+from queue import Queue
+from threading import Thread
+
 from fastapi import APIRouter
 from loguru import logger
 from starlette.responses import RedirectResponse
@@ -18,6 +21,7 @@ from app.swarm_agent import SwarmAgent
 # )
 
 router = APIRouter()
+queue: Queue[Message] = Queue()
 
 
 @router.get(
@@ -58,17 +62,33 @@ async def receive_message(
 
     logger.debug("router received message {message}", message=message.model_dump())
 
-    swarm_agent = SwarmAgent(message, "app/parameters.json")
-    response = await swarm_agent.step()
+    queue.put(message)
 
-    nice_str = ""
-    for binding in response["results"]["bindings"]:
-        nice_str += str(binding) + " "
+    # swarm_agent = SwarmAgent(message, "app/parameters.json")
+    # response = await swarm_agent.step()
 
-    return nice_str  # response['results']['bindings'] #swarm_agent.keyword
+    # nice_str = ""
+    # for binding in response["results"]["bindings"]:
+    #     nice_str += str(binding) + " "
+
+    return "Success"  # response['results']['bindings'] #swarm_agent.keyword
 
 
 # TODO make sure that create_agent endpoint does not have to wait for response,
 #      just creates the forward/backward agent
+
+
+def swarm_agent_control():
+    while True:
+        message = queue.get()
+
+        swarm_agent = SwarmAgent(message, "app/parameters.json")
+        response = swarm_agent.step()
+
+        logger.debug(f"Got response after swarm_agent.step(): {response}")
+
+
+swarm_agent_control_thread = Thread(target=swarm_agent_control, daemon=True)
+swarm_agent_control_thread.start()
 
 # TODO aggregate the results carried back by backward ants
