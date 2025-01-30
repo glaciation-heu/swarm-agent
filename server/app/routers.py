@@ -7,6 +7,7 @@ from app.schemas import Message
 
 # from app.utils import get_keyword_from_query
 from app.swarm_agent import SwarmAgent
+from logguru import logger
 
 # from app.schemas import (
 #     ResponseHead,
@@ -55,7 +56,7 @@ async def receive_message(
     Metadata Service and other Swarm Agents.
     """
 
-    print(message.model_dump())
+    logger.debug("router received message {message}", message=message.model_dump())
 
     swarm_agent = SwarmAgent(message, "app/parameters.json")
     response = await swarm_agent.step()
