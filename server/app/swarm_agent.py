@@ -262,7 +262,7 @@ class SwarmAgent:
             logger.debug(
                 "I am sending the message to {node} with IP address {node_ip}",
                 node=self.neighbors[0]["name"],
-                node_ip=self.neighbors[0]["name"],
+                node_ip=self.neighbors[0]["ip"],
             )
             self.send_message(forward_message.model_dump(), self.neighbors[0]["ip"])
 
