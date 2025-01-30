@@ -166,7 +166,7 @@ class SwarmAgent:
 
     def get_neighbor_pheromones(self):
         """_summary_
-        Reads pheromone table from a MongoDB database to appropriate variable
+        Reads pheromone table from a Jena database to appropriate variable
         """
         pheromone_query = (
             "SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {"
@@ -224,7 +224,7 @@ class SwarmAgent:
 
     async def step(self):
         this_node = (
-            "node1"  # one should get the actual node id from the MongoDB database
+            "node1"  # one should get the actual node id from the Jena database
         )
         self.visited_nodes.append(this_node)
         response = self.local_query()
