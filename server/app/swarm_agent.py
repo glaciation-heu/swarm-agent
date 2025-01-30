@@ -255,7 +255,16 @@ class SwarmAgent:
             "goodness_values={goodness_values}", goodness_values=goodness_values
         )
 
+        logger.debug(
+            "self.time_to_live = {time_to_live}", time_to_live=self.time_to_live
+        )
+
         forward_message = self.create_forward_message()
+
+        logger.debug(
+            "forward_message.time_to_live = {ttl}", ttl=forward_message.time_to_live
+        )
+
         logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
         if forward_message.time_to_live > 0:
