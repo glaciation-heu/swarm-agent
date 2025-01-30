@@ -235,9 +235,7 @@ class SwarmAgent:
                 self.pheromone_table[self.keyword],
             )
         else:
-            # TODO rewrite the initialization of the new keyword!
-            # we know all neighbors and thus can loop over them and set up
-            # some small initial pheromone value for this keyword
+
             self.pheromone_table[self.keyword] = {}
 
             for neighbor in self.neighbors:
