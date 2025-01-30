@@ -223,7 +223,8 @@ class SwarmAgent:
         requests.post(url, json=message, headers=headers)
 
     async def step(self):
-        this_node = "node1"  # one should get the actual node id from the Jena database
+        this_node = os.environ["MY_POD_NAME"]
+        logger.debug("this_node = {this_node}", this_node=this_node)
         self.visited_nodes.append(this_node)
         response = self.local_query()
         self.get_neighbor_pheromones()
