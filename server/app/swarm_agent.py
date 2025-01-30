@@ -166,7 +166,7 @@ class SwarmAgent:
 
     def get_neighbor_pheromones(self):
         """_summary_
-        Reads pheromone table from a MongoDB database to appropriate variable
+        Reads pheromone table from a Jena database to appropriate variable
         """
         pheromone_query = (
             "SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {"
@@ -223,9 +223,9 @@ class SwarmAgent:
         requests.post(url, json=message, headers=headers)
 
     def step(self):
-        this_node = (
-            "node1"  # one should get the actual node id from the MongoDB database
-        )
+        this_node = os.environ["MY_POD_NAME"]
+        logger.debug("this_node = {this_node}", this_node=this_node)
+
         self.visited_nodes.append(this_node)
         response = self.local_query()
         self.get_neighbor_pheromones()
@@ -255,7 +255,16 @@ class SwarmAgent:
             "goodness_values={goodness_values}", goodness_values=goodness_values
         )
 
+        logger.debug(
+            "self.time_to_live = {time_to_live}", time_to_live=self.time_to_live
+        )
+
         forward_message = self.create_forward_message()
+
+        logger.debug(
+            "forward_message.time_to_live = {ttl}", ttl=forward_message.time_to_live
+        )
+
         logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
         if forward_message.time_to_live > 0:
