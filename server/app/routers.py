@@ -1,6 +1,6 @@
 # from json import dumps
 from fastapi import APIRouter
-from logguru import logger
+from loguru import logger
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_303_SEE_OTHER
 
