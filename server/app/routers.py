@@ -34,20 +34,6 @@ async def read_root() -> RedirectResponse:
     return RedirectResponse(url="/docs", status_code=HTTP_303_SEE_OTHER)
 
 
-# @router.get(
-#     "/api/v0/graph",
-# )
-# async def receive_query(
-#     query: str,
-# ) -> str:
-#     """Receive query, create Swarm Agent, make a step"""
-
-#     swarm_agent = SwarmAgent(query, "app/parameters.json")
-#     response = swarm_agent.step()
-
-#     return dumps(response.json())  # swarm_agent.keyword
-
-
 @router.post(
     "/api/v0/create_agent",
 )
@@ -64,18 +50,7 @@ async def receive_message(
 
     queue.put(message)
 
-    # swarm_agent = SwarmAgent(message, "app/parameters.json")
-    # response = await swarm_agent.step()
-
-    # nice_str = ""
-    # for binding in response["results"]["bindings"]:
-    #     nice_str += str(binding) + " "
-
     return "Success"  # response['results']['bindings'] #swarm_agent.keyword
-
-
-# TODO make sure that create_agent endpoint does not have to wait for response,
-#      just creates the forward/backward agent
 
 
 def swarm_agent_control():
