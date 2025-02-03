@@ -191,7 +191,7 @@ class SwarmAgent:
                     )
                 }
 
-    def get_pheromone_table():
+    def get_pheromone_table(self):
         pheromone_query = """
         SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {
         GRAPH <swarm-agent:pheromones> {
@@ -222,7 +222,7 @@ class SwarmAgent:
                 }
         return pheromone_table
 
-    def delete_pheromone_entry(local_node_id, keyword, neighbor_id):
+    def delete_pheromone_entry(self, local_node_id, keyword, neighbor_id):
 
         pheromone_delete_query = f"""
         DELETE {{
@@ -250,7 +250,7 @@ class SwarmAgent:
 
         return response, pheromone_delete_query
 
-    def add_pheromone_entry(local_node_id, keyword, neighbor_id, ph_value):
+    def add_pheromone_entry(self, local_node_id, keyword, neighbor_id, ph_value):
         association = "swarm-agent:" + keyword + "---" + neighbor_id
         pheromone_insert_query = f"""INSERT DATA {{
             GRAPH <swarm-agent:pheromones> {{ <{local_node_id}> <swarm:hasAssociation> <{association}> .  
@@ -266,6 +266,13 @@ class SwarmAgent:
         response = requests.post(base_url, json=params)
 
         return response, pheromone_insert_query
+    
+    def update_in_two_steps(self, local_node_id, keyword, neighbor_id, ph_value):
+        response_delete, pheromone_delete_query = self.delete_pheromone_entry(local_node_id, keyword, neighbor_id)
+        response_add, pheromone_add_query = self.add_pheromone_entry(local_node_id, keyword, neighbor_id, ph_value)
+    
+        return response_add, pheromone_add_query, response_delete, pheromone_delete_query
+
 
     def getGoodnessValues(self, keyword):
         goodness_values = []
