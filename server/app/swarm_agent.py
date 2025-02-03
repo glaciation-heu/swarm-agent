@@ -191,6 +191,37 @@ class SwarmAgent:
                     )
                 }
 
+    def get_pheromone_table():
+        pheromone_query = """
+        SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {
+        GRAPH <swarm-agent:pheromones> {
+            ?assoc <swarm:hasKeyword> ?keyword ;
+                <swarm:hasNeighbor> ?neighbor_id ;
+                <swarm:hasPheromoneValue> ?pheromone_value .
+            }
+        }
+        """
+        params = {"query": pheromone_query}
+        encoded_query = urlencode(params)
+        base_url = "http://metadata-service:80/api/v0/graph"
+        full_url = f"{base_url}?{encoded_query}"
+
+        response = requests.get(full_url)
+        results = response.json()
+        pheromone_table = {}
+        for result in results["results"]["bindings"]:
+            try:
+                pheromone_table[result["keyword"]["value"]][
+                    result["neighbor_id"]["value"]
+                ] = float(result["pheromone_value"]["value"])
+            except KeyError:
+                pheromone_table[result["keyword"]["value"]] = {
+                    result["neighbor_id"]["value"]: float(
+                        result["pheromone_value"]["value"]
+                    )
+                }
+        return pheromone_table
+
     def getGoodnessValues(self, keyword):
         goodness_values = []
 
