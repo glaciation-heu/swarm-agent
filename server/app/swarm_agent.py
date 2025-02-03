@@ -211,6 +211,11 @@ class SwarmAgent:
         results = response.json()
         # pheromone_table = {}
         for result in results["results"]["bindings"]:
+            logger.debug(
+                "I have found keyword {keyword} for neighbor {nbr}",
+                keyword=result["keyword"]["value"],
+                nbr=result["neighbor_id"]["value"],
+            )
             try:
                 self.pheromone_table[result["keyword"]["value"]][
                     result["neighbor_id"]["value"]
