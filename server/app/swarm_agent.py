@@ -244,7 +244,7 @@ class SwarmAgent:
 
         params = {"query": pheromone_delete_query}
 
-        base_url = "http://metadata-service:80/api/v0/graph"
+        base_url = "http://metadata-service:80/api/v0/graph/update"
 
         response = requests.post(base_url, json=params)
 
@@ -262,7 +262,7 @@ class SwarmAgent:
 
         params = {"query": pheromone_insert_query}
 
-        base_url = "http://metadata-service:80/api/v0/graph"
+        base_url = "http://metadata-service:80/api/v0/graph/update"
 
         response = requests.post(base_url, json=params)
 
@@ -335,7 +335,7 @@ class SwarmAgent:
 
             for neighbor in self.neighbors:
                 self.pheromone_table[self.keyword][neighbor["name"]] = 0.1
-                logger.debug("I am updating the pheromone table")
+                logger.debug("I am updating the pheromone table...")
                 (
                     response_add,
                     pheromone_add_query,
