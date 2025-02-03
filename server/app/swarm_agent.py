@@ -192,6 +192,7 @@ class SwarmAgent:
                 }
 
     def get_pheromone_table(self):
+        logger.debug("I am reading from pheromone table...")
         pheromone_query = """
         SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {
         GRAPH <swarm-agent:pheromones> {
@@ -319,7 +320,8 @@ class SwarmAgent:
 
         self.visited_nodes.append(this_node)
         response = self.local_query()
-        self.get_neighbor_pheromones()
+        # self.get_neighbor_pheromones()
+        self.get_pheromone_table()
         if self.keyword in self.pheromone_table:
             logger.debug(
                 "pheromone_table[{keyword}]".format(keyword=self.keyword),
@@ -333,6 +335,24 @@ class SwarmAgent:
 
             for neighbor in self.neighbors:
                 self.pheromone_table[self.keyword][neighbor["name"]] = 0.1
+                logger.debug("I am updating the pheromone table")
+                (
+                    response_add,
+                    pheromone_add_query,
+                    response_delete,
+                    pheromone_delete_query,
+                ) = self.update_in_two_steps(
+                    this_node,
+                    self.keyword,
+                    neighbor["name"],
+                    self.pheromone_table[self.keyword][neighbor["name"]],
+                )
+
+            logger.debug(
+                "Add response: {response_add}, delete response: {response_delete}",
+                response_add=response_add.json(),
+                response_delete=response_delete.json(),
+            )
 
             logger.debug(
                 "pheromone_table[{keyword}] = {content}",
