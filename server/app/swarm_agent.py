@@ -221,6 +221,34 @@ class SwarmAgent:
                     )
                 }
         return pheromone_table
+    
+    def delete_pheromone_entry(local_node_id, keyword, neighbor_id):
+    
+        pheromone_delete_query = f"""
+        DELETE {{
+        GRAPH <swarm-agent:pheromones> {{ 
+            <{local_node_id}> <swarm:hasAssociation> ?association .
+            ?association <swarm:hasKeyword> "{keyword}" ;
+                        <swarm:hasNeighbor> "{neighbor_id}" ;
+                        <swarm:hasPheromoneValue> ?pheromoneValue .
+            }}
+        }}
+        WHERE {{
+        GRAPH <swarm-agent:pheromones> {{ 
+            <{local_node_id}> <swarm:hasAssociation> ?association .
+            ?association <swarm:hasKeyword> "{keyword}" ;
+                        <swarm:hasNeighbor> "{neighbor_id}" ;
+                        <swarm:hasPheromoneValue> ?pheromoneValue .
+            }}
+        }}"""
+
+        params={"query":pheromone_delete_query}
+        
+        base_url = "http://metadata-service:80/api/v0/graph"
+
+        response = requests.post(base_url, json=params)
+        
+        return response, pheromone_delete_query
 
     def getGoodnessValues(self, keyword):
         goodness_values = []
