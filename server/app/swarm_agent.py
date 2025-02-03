@@ -208,25 +208,24 @@ class SwarmAgent:
 
         response = requests.get(full_url)
         results = response.json()
-        pheromone_table = {}
+        # pheromone_table = {}
         for result in results["results"]["bindings"]:
             try:
-                pheromone_table[result["keyword"]["value"]][
+                self.pheromone_table[result["keyword"]["value"]][
                     result["neighbor_id"]["value"]
                 ] = float(result["pheromone_value"]["value"])
             except KeyError:
-                pheromone_table[result["keyword"]["value"]] = {
+                self.pheromone_table[result["keyword"]["value"]] = {
                     result["neighbor_id"]["value"]: float(
                         result["pheromone_value"]["value"]
                     )
                 }
-        return pheromone_table
+        # return pheromone_table
 
     def delete_pheromone_entry(self, local_node_id, keyword, neighbor_id):
-
         pheromone_delete_query = f"""
         DELETE {{
-        GRAPH <swarm-agent:pheromones> {{ 
+        GRAPH <swarm-agent:pheromones> {{
             <{local_node_id}> <swarm:hasAssociation> ?association .
             ?association <swarm:hasKeyword> "{keyword}" ;
                         <swarm:hasNeighbor> "{neighbor_id}" ;
@@ -234,7 +233,7 @@ class SwarmAgent:
             }}
         }}
         WHERE {{
-        GRAPH <swarm-agent:pheromones> {{ 
+        GRAPH <swarm-agent:pheromones> {{
             <{local_node_id}> <swarm:hasAssociation> ?association .
             ?association <swarm:hasKeyword> "{keyword}" ;
                         <swarm:hasNeighbor> "{neighbor_id}" ;
@@ -253,10 +252,11 @@ class SwarmAgent:
     def add_pheromone_entry(self, local_node_id, keyword, neighbor_id, ph_value):
         association = "swarm-agent:" + keyword + "---" + neighbor_id
         pheromone_insert_query = f"""INSERT DATA {{
-            GRAPH <swarm-agent:pheromones> {{ <{local_node_id}> <swarm:hasAssociation> <{association}> .  
-            <{association}> 
-            <swarm:hasKeyword> "{keyword}" ; 
-            <swarm:hasNeighbor> "{neighbor_id}" ;               
+            GRAPH <swarm-agent:pheromones> {{ <{local_node_id}>
+            <swarm:hasAssociation> <{association}> .
+            <{association}>
+            <swarm:hasKeyword> "{keyword}" ;
+            <swarm:hasNeighbor> "{neighbor_id}" ;
             <swarm:hasPheromoneValue> {ph_value} . }} }}"""
 
         params = {"query": pheromone_insert_query}
@@ -266,13 +266,21 @@ class SwarmAgent:
         response = requests.post(base_url, json=params)
 
         return response, pheromone_insert_query
-    
-    def update_in_two_steps(self, local_node_id, keyword, neighbor_id, ph_value):
-        response_delete, pheromone_delete_query = self.delete_pheromone_entry(local_node_id, keyword, neighbor_id)
-        response_add, pheromone_add_query = self.add_pheromone_entry(local_node_id, keyword, neighbor_id, ph_value)
-    
-        return response_add, pheromone_add_query, response_delete, pheromone_delete_query
 
+    def update_in_two_steps(self, local_node_id, keyword, neighbor_id, ph_value):
+        response_delete, pheromone_delete_query = self.delete_pheromone_entry(
+            local_node_id, keyword, neighbor_id
+        )
+        response_add, pheromone_add_query = self.add_pheromone_entry(
+            local_node_id, keyword, neighbor_id, ph_value
+        )
+
+        return (
+            response_add,
+            pheromone_add_query,
+            response_delete,
+            pheromone_delete_query,
+        )
 
     def getGoodnessValues(self, keyword):
         goodness_values = []
