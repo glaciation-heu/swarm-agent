@@ -191,17 +191,19 @@ class SwarmAgent:
                     )
                 }
 
-    def get_pheromone_table(self):
+    def get_pheromone_table(self, this_node):
         logger.debug("I am reading from pheromone table...")
-        pheromone_query = """
-        SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {
-        GRAPH <swarm-agent:pheromones> {
-            ?assoc <swarm:hasKeyword> ?keyword ;
-                <swarm:hasNeighbor> ?neighbor_id ;
-                <swarm:hasPheromoneValue> ?pheromone_value .
-            }
-        }
-        """
+        pheromone_query = f"""
+        SELECT ?keyword ?neighbor_id ?pheromone_value
+        WHERE {{
+            GRAPH <swarm-agent:pheromones> {{
+                <swarm:{this_node}> <swarm:hasAssociation> ?assoc .
+                ?assoc <swarm:hasKeyword> ?keyword ;
+                        <swarm:hasNeighbor> ?neighbor_id ;
+                        <swarm:hasPheromoneValue> ?pheromone_value .
+            }}
+        }}
+"""
         params = {"query": pheromone_query}
         encoded_query = urlencode(params)
         base_url = "http://metadata-service:80/api/v0/graph"
@@ -209,7 +211,7 @@ class SwarmAgent:
 
         response = requests.get(full_url)
         results = response.json()
-        # pheromone_table = {}
+
         for result in results["results"]["bindings"]:
             logger.debug(
                 "I have found keyword {keyword} for neighbor {nbr}",
@@ -226,13 +228,12 @@ class SwarmAgent:
                         result["pheromone_value"]["value"]
                     )
                 }
-        # return pheromone_table
 
     def delete_pheromone_entry(self, local_node_id, keyword, neighbor_id):
         pheromone_delete_query = f"""
         DELETE {{
         GRAPH <swarm-agent:pheromones> {{
-            <{local_node_id}> <swarm:hasAssociation> ?association .
+            <swarm:{local_node_id}> <swarm:hasAssociation> ?association .
             ?association <swarm:hasKeyword> "{keyword}" ;
                         <swarm:hasNeighbor> "{neighbor_id}" ;
                         <swarm:hasPheromoneValue> ?pheromoneValue .
@@ -240,7 +241,7 @@ class SwarmAgent:
         }}
         WHERE {{
         GRAPH <swarm-agent:pheromones> {{
-            <{local_node_id}> <swarm:hasAssociation> ?association .
+            <swarm:{local_node_id}> <swarm:hasAssociation> ?association .
             ?association <swarm:hasKeyword> "{keyword}" ;
                         <swarm:hasNeighbor> "{neighbor_id}" ;
                         <swarm:hasPheromoneValue> ?pheromoneValue .
@@ -258,7 +259,7 @@ class SwarmAgent:
     def add_pheromone_entry(self, local_node_id, keyword, neighbor_id, ph_value):
         association = "swarm-agent:" + keyword + "---" + neighbor_id
         pheromone_insert_query = f"""INSERT DATA {{
-            GRAPH <swarm-agent:pheromones> {{ <{local_node_id}>
+            GRAPH <swarm-agent:pheromones> {{ <swarm:{local_node_id}>
             <swarm:hasAssociation> <{association}> .
             <{association}>
             <swarm:hasKeyword> "{keyword}" ;
@@ -326,7 +327,7 @@ class SwarmAgent:
         self.visited_nodes.append(this_node)
         response = self.local_query()
         # self.get_neighbor_pheromones()
-        self.get_pheromone_table()
+        self.get_pheromone_table(this_node)
         if self.keyword in self.pheromone_table:
             logger.debug(
                 "pheromone_table[{keyword}]".format(keyword=self.keyword),
