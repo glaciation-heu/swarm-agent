@@ -53,7 +53,6 @@ class SwarmAgent:
         )
         self.time_to_live = message.time_to_live  # self.parameters["ttl"]
         self.neighbors = self.get_swarm_agent_pods()
-        # TODO initialize pheromone table with the neighbor pod IPs
         self.pheromone_table: Dict[str, Any] = {}
 
     def load_parameters(self, file_path: str) -> Any:
@@ -334,9 +333,6 @@ class SwarmAgent:
                 self.pheromone_table[self.keyword],
             )
         else:
-            # TODO rewrite the initialization of the new keyword!
-            # we know all neighbors and thus can loop over them and set up
-            # some small initial pheromone value for this keyword
             self.pheromone_table[self.keyword] = {}
 
             for neighbor in self.neighbors:
