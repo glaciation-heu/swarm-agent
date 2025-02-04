@@ -380,7 +380,9 @@ class SwarmAgent:
 
         logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
-        if forward_message.time_to_live > 0:
+        if forward_message.time_to_live > 0 and (
+            self.neighbors[0]["name"] not in forward_message.visited_nodes
+        ):
             logger.debug(
                 "I am sending the message to {node} with IP address {node_ip}",
                 node=self.neighbors[0]["name"],
