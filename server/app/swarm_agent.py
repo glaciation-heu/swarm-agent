@@ -389,6 +389,17 @@ class SwarmAgent:
                 node_ip=self.neighbors[0]["ip"],
             )
             self.send_message(forward_message.model_dump(), self.neighbors[0]["ip"])
+        else:
+            visited = (
+                "Yes!"
+                if self.neighbors[0]["name"] in forward_message.visited_nodes
+                else "No!"
+            )
+            logger.debug(
+                "Ant terminated! ttl={ttl}, visited neighbor {visited}",
+                ttl=forward_message.time_to_live,
+                visited=visited,
+            )
 
         # we need to modify the message
         # update visited nodes list!
