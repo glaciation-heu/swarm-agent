@@ -1,7 +1,7 @@
 # from json import dumps
 from queue import Queue
 from threading import Thread
-from time import time
+from time import sleep, time
 
 from fastapi import APIRouter
 from loguru import logger
@@ -72,7 +72,17 @@ def swarm_agent_control():
             logger.info(f"Results:\n{results.model_dump_json(indent=2)}")
 
 
+def regular_pheromone_evaporation():
+    swarm_agent = SwarmAgent(Message(), "app/parameters.json")
+    while True:
+        swarm_agent.pheromone_evaporation()
+        sleep(5)
+
+
 swarm_agent_control_thread = Thread(target=swarm_agent_control, daemon=True)
 swarm_agent_control_thread.start()
+
+ph_evap_thread = Thread(target=regular_pheromone_evaporation, daemon=True)
+ph_evap_thread.start()
 
 # TODO aggregate the results carried back by backward ants

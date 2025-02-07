@@ -178,7 +178,7 @@ class SwarmAgent:
 
         return EMPTY_SEARCH_RESPONSE
 
-    def get_pheromone_table(self, this_node):
+    def get_pheromone_table(self, this_node: str) -> dict[str, Any]:
         logger.debug("I am reading from pheromone table...")
         pheromone_query = f"""
         SELECT ?keyword ?neighbor_id ?pheromone_value
@@ -192,6 +192,7 @@ class SwarmAgent:
         }}"""
 
         results = self.local_query(pheromone_query)
+        pheromone_table: dict[str, Any] = {}
 
         for result in results.results.bindings:
             logger.debug(
@@ -200,15 +201,17 @@ class SwarmAgent:
                 nbr=result["neighbor_id"]["value"],
             )
             try:
-                self.pheromone_table[result["keyword"]["value"]][
+                pheromone_table[result["keyword"]["value"]][
                     result["neighbor_id"]["value"]
                 ] = float(result["pheromone_value"]["value"])
             except KeyError:
-                self.pheromone_table[result["keyword"]["value"]] = {
+                pheromone_table[result["keyword"]["value"]] = {
                     result["neighbor_id"]["value"]: float(
                         result["pheromone_value"]["value"]
                     )
                 }
+
+        return pheromone_table
 
     def delete_pheromone_entry(self, local_node_id, keyword, neighbor_id):
         pheromone_delete_query = f"""
@@ -321,7 +324,7 @@ class SwarmAgent:
             self.link_costs[self.this_node] = self.latency
         self.visited_nodes.append({"name": self.this_node, "ip": self.this_node_ip})
         results = self.local_query()
-        self.get_pheromone_table(self.this_node)
+        self.pheromone_table = self.get_pheromone_table(self.this_node)
         if self.keyword in self.pheromone_table:
             logger.debug(
                 "pheromone_table[{keyword}]".format(keyword=self.keyword),
@@ -415,7 +418,7 @@ class SwarmAgent:
         r_max = 10
 
         if len(self.link_costs) > 0 and self.time_to_live < len(self.visited_nodes):
-            self.get_pheromone_table(self.this_node)
+            self.pheromone_table = self.get_pheromone_table(self.this_node)
 
             total_link_costs = sum(self.link_costs.values())
             z = w_d * len(self.results.results.bindings) / r_max + (
@@ -451,3 +454,15 @@ class SwarmAgent:
             return self.forward_ant_step()
 
         return self.backward_ant_step()
+
+    def pheromone_evaporation(self, parameter_file="app/parameters.json"):
+        pheromone_table = self.get_pheromone_table(self.this_node)
+
+        for keyword in pheromone_table:
+            for neighbor in pheromone_table[keyword]:
+                self.update_in_two_steps(
+                    self.this_node,
+                    keyword,
+                    neighbor,
+                    pheromone_table[keyword][neighbor] * (1 - self.parameters["p"]),
+                )
