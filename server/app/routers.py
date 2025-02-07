@@ -1,6 +1,7 @@
 # from json import dumps
 from queue import Queue
 from threading import Thread
+from time import time
 
 from fastapi import APIRouter
 from loguru import logger
@@ -45,7 +46,7 @@ async def receive_message(
     We can use the same function to receive messages from both
     Metadata Service and other Swarm Agents.
     """
-
+    message.time_received = time()
     logger.debug("router received message {message}", message=message.model_dump())
 
     queue.put(message)
@@ -58,9 +59,14 @@ def swarm_agent_control():
         message = queue.get()
 
         swarm_agent = SwarmAgent(message, "app/parameters.json")
-        response = swarm_agent.step()
+        is_backward_ant_done, results = swarm_agent.step()
 
-        logger.debug(f"Got response after swarm_agent.step(): {response}")
+        if is_backward_ant_done:
+            logger.info(
+                "A Backward Ant carried back a response for query '{query}'",
+                query=swarm_agent.query,
+            )
+            logger.info(f"Results: {results.model_dump_json(indent=2)}")
 
 
 swarm_agent_control_thread = Thread(target=swarm_agent_control, daemon=True)

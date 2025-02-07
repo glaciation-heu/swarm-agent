@@ -14,7 +14,7 @@ class CustomFastAPI(FastAPI):
             return self.openapi_schema
         openapi_schema = get_openapi(
             title="Swarm Agent",
-            version="0.3",
+            version="0.4",
             description="This service implements ACO algorithm for data \
                 search and movement",
             contact={

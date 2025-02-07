@@ -4,6 +4,7 @@ import json
 import os
 import re
 from datetime import datetime, timezone
+from time import time
 from urllib.parse import urlencode
 
 import requests
@@ -11,7 +12,7 @@ from kubernetes import client, config
 from loguru import logger
 from rdflib.plugins.sparql.parser import parseQuery
 
-from app.schemas import Message
+from app.schemas import EMPTY_SEARCH_RESPONSE, Message, SearchResponse
 
 # from app.schemas import (
 #     ResponseHead,
@@ -20,6 +21,9 @@ from app.schemas import Message
 #     SPARQLQuery,
 #     UpdateRequestBody,
 # )
+
+
+METADATA_SERVICE_URL = "http://metadata-service:80"
 
 
 class SwarmAgent:
@@ -37,7 +41,12 @@ class SwarmAgent:
         file. File is in json format which is basically a dictionary
         :type parameters_file: str
         """
+        self.type = message.message_type
+        self.latency = message.time_received - message.time_sent
+        self.this_node = os.environ["MY_POD_NAME"]
+        self.this_node_ip = os.environ["MY_POD_IP"]
         self.query = message.sparql_query
+        self.results = message.results
         self.parameters = self.load_parameters(parameters_file)
         self.keyword = (
             self.transform_query_to_keyword(self.query)
@@ -45,6 +54,7 @@ class SwarmAgent:
             else message.keyword
         )
         self.visited_nodes = message.visited_nodes
+        self.link_costs = message.link_costs
         now_utc = datetime.now(timezone.utc)
         self.unique_id = (
             now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -127,7 +137,7 @@ class SwarmAgent:
 
         swarm_agents = []
         for pod in pods.items:
-            if pod.status.pod_ip != os.environ["MY_POD_IP"]:
+            if pod.status.pod_ip != self.this_node_ip:
                 swarm_agents.append(
                     {
                         "name": pod.metadata.name,
@@ -147,7 +157,7 @@ class SwarmAgent:
 
         return local_predicate, local_object
 
-    def local_query(self, query: str | None = None) -> Any:
+    def local_query(self, query: str | None = None) -> SearchResponse:
         """
         Queries Local Metadata service
         """
@@ -156,39 +166,17 @@ class SwarmAgent:
 
         params = {"query": query}
         encoded_query = urlencode(params)
-        base_url = "http://metadata-service:80/api/v0/graph"
+        base_url = f"{METADATA_SERVICE_URL}/api/v0/graph"
         full_url = f"{base_url}?{encoded_query}"
 
         response = requests.get(full_url)
 
-        return response.json()
+        if response.status_code == 200:
+            return SearchResponse.model_validate_json(response.text)
+        else:
+            logger.error(f"Error: {response.status_code}, {response.text}")
 
-    def get_neighbor_pheromones(self):
-        """_summary_
-        Reads pheromone table from a Jena database to appropriate variable
-        """
-        pheromone_query = (
-            "SELECT ?keyword ?neighbor_id ?pheromone_value WHERE {"
-            "GRAPH <swarm-agent:pheromones> {"
-            "?entry <swarm-agent:hasKeyword> ?keyword ."
-            "?entry <swarm-agent:hasNode> ?neighbor_id ."
-            "?entry <swarm-agent:hasPheromone> ?pheromone_value ."
-            "}"
-            "}"
-        )
-
-        results = self.local_query(pheromone_query)
-        for result in results["results"]["bindings"]:
-            try:
-                self.pheromone_table[result["keyword"]["value"]][
-                    result["neighbor_id"]["value"]
-                ] = float(result["pheromone_value"]["value"])
-            except KeyError:
-                self.pheromone_table[result["keyword"]["value"]] = {
-                    result["neighbor_id"]["value"]: float(
-                        result["pheromone_value"]["value"]
-                    )
-                }
+        return EMPTY_SEARCH_RESPONSE
 
     def get_pheromone_table(self, this_node):
         logger.debug("I am reading from pheromone table...")
@@ -201,17 +189,11 @@ class SwarmAgent:
                         <swarm:hasNeighbor> ?neighbor_id ;
                         <swarm:hasPheromoneValue> ?pheromone_value .
             }}
-        }}
-"""
-        params = {"query": pheromone_query}
-        encoded_query = urlencode(params)
-        base_url = "http://metadata-service:80/api/v0/graph"
-        full_url = f"{base_url}?{encoded_query}"
+        }}"""
 
-        response = requests.get(full_url)
-        results = response.json()
+        results = self.local_query(pheromone_query)
 
-        for result in results["results"]["bindings"]:
+        for result in results.results.bindings:
             logger.debug(
                 "I have found keyword {keyword} for neighbor {nbr}",
                 keyword=result["keyword"]["value"],
@@ -249,9 +231,9 @@ class SwarmAgent:
 
         params = {"query": pheromone_delete_query}
 
-        base_url = "http://metadata-service:80/api/v0/graph/update"
-
-        response = requests.post(base_url, json=params)
+        response = self.send_message(
+            params, METADATA_SERVICE_URL, "api/v0/graph/update"
+        )
 
         return response, pheromone_delete_query
 
@@ -267,9 +249,9 @@ class SwarmAgent:
 
         params = {"query": pheromone_insert_query}
 
-        base_url = "http://metadata-service:80/api/v0/graph/update"
-
-        response = requests.post(base_url, json=params)
+        response = self.send_message(
+            params, METADATA_SERVICE_URL, "api/v0/graph/update"
+        )
 
         return response, pheromone_insert_query
 
@@ -298,35 +280,48 @@ class SwarmAgent:
 
         return goodness_values
 
-    def form_backward_ant_message(self):
-        backward_message = ""
-        return backward_message
+    def create_backward_message(
+        self, results: SearchResponse, unique_id: str = ""
+    ) -> Message:
+        message = Message(
+            message_type="backward",
+            unique_id=unique_id,
+            sparql_query=self.query,
+            visited_nodes=self.visited_nodes,
+            link_costs=self.link_costs,
+            time_to_live=(
+                len(self.visited_nodes) if unique_id == "" else self.time_to_live - 1
+            ),
+            keyword=self.keyword,
+            results=results,
+        )
+        logger.debug("from create {message_type}", message_type=message.message_type)
+        return message
 
     def create_forward_message(self) -> Message:
         message = Message(
             message_type="forward",
-            unique_id="my_unique_id",
+            unique_id=self.unique_id,
             sparql_query=self.query,
             visited_nodes=self.visited_nodes,
+            link_costs=self.link_costs,
             time_to_live=self.time_to_live - 1,
             keyword=self.keyword,
         )
         logger.debug("from create {message_type}", message_type=message.message_type)
         return message
 
-    def send_message(self, message, ip, port=80, endpoint="api/v0/create_agent"):
+    def send_message(self, message, url, endpoint="api/v0/create_agent"):
         headers = {"Content-Type": "application/json", "accept": "application/json"}
-        url = f"http://{ip}:{port}/{endpoint}"
-        requests.post(url, json=message, headers=headers)
+        url = f"http://{url}/{endpoint}"
+        return requests.post(url, json=message, headers=headers)
 
-    def step(self):
-        this_node = os.environ["MY_POD_NAME"]
-        logger.debug("this_node = {this_node}", this_node=this_node)
-
-        self.visited_nodes.append(this_node)
-        response = self.local_query()
-        # self.get_neighbor_pheromones()
-        self.get_pheromone_table(this_node)
+    def forward_ant_step(self):
+        if len(self.visited_nodes) > 0:
+            self.link_costs[self.this_node] = self.latency
+        self.visited_nodes.append({"name": self.this_node, "ip": self.this_node_ip})
+        results = self.local_query()
+        self.get_pheromone_table(self.this_node)
         if self.keyword in self.pheromone_table:
             logger.debug(
                 "pheromone_table[{keyword}]".format(keyword=self.keyword),
@@ -344,7 +339,7 @@ class SwarmAgent:
                     response_delete,
                     pheromone_delete_query,
                 ) = self.update_in_two_steps(
-                    this_node,
+                    self.this_node,
                     self.keyword,
                     neighbor["name"],
                     self.pheromone_table[self.keyword][neighbor["name"]],
@@ -388,12 +383,13 @@ class SwarmAgent:
                 node=self.neighbors[0]["name"],
                 node_ip=self.neighbors[0]["ip"],
             )
-            self.send_message(forward_message.model_dump(), self.neighbors[0]["ip"])
+            forward_message.time_sent = time()
+            self.send_message(
+                forward_message.model_dump(), f"{self.neighbors[0]['ip']}:80"
+            )
         else:
             visited = (
-                "Yes!"
-                if self.neighbors[0]["name"] in forward_message.visited_nodes
-                else "No!"
+                "Yes!" if self.neighbors[0] in forward_message.visited_nodes else "No!"
             )
             logger.debug(
                 "Ant terminated! ttl={ttl}, visited neighbor {visited}",
@@ -401,11 +397,54 @@ class SwarmAgent:
                 visited=visited,
             )
 
-        # we need to modify the message
-        # update visited nodes list!
-
-        # if request fulfilled create a backward ant message
+        if len(results.results.bindings) > 0:
+            backward_message = self.create_backward_message(results)
+            self.send_message(backward_message.model_dump(), f"{self.this_node_ip}:80")
 
         # once proper node is chosen we need to send the message further
 
-        return response
+        return False, EMPTY_SEARCH_RESPONSE
+
+    def backward_ant_step(self):
+        # hardcoded parameters for now
+        w_d = 0.5
+        t_max = 3
+        r_max = 10
+
+        if len(self.link_costs) > 0 and self.time_to_live < len(self.visited_nodes):
+            self.get_pheromone_table(self.this_node)
+
+            total_link_costs = sum(self.link_costs.values())
+            z = w_d * len(self.results.results.bindings) / r_max + (
+                (1 - w_d) * t_max / (2 * total_link_costs)
+            )
+
+            target_neighbor = self.visited_nodes[self.time_to_live]
+            self.update_in_two_steps(
+                self.this_node,
+                self.keyword,
+                target_neighbor,
+                self.pheromone_table[self.keyword][target_neighbor] + z,
+            )
+
+        if self.time_to_live > 1:
+            backward_message = self.create_backward_message(
+                self.results, self.unique_id
+            )
+            backward_message.time_sent = time()
+            self.send_message(
+                backward_message.model_dump(),
+                f"{self.visited_nodes[self.time_to_live-2]['ip']}:80",
+            )
+
+            return False, EMPTY_SEARCH_RESPONSE
+
+        return True, self.results
+
+    def step(self):
+        logger.debug("this_node = {this_node}", this_node=self.this_node)
+
+        if self.type == "forward":
+            return self.forward_ant_step()
+
+        return self.backward_ant_step()

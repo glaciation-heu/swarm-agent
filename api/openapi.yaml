@@ -9,7 +9,7 @@ info:
   license:
     name: MIT License
     url: https://github.com/glaciation-heu/swarm-agent/blob/main/LICENSE
-  version: 0.3.3
+  version: 0.4.0
 paths:
   /api/v0/create_agent:
     post:
@@ -66,6 +66,9 @@ components:
       properties:
         message_type:
           type: string
+          enum:
+          - forward
+          - backward
           title: Message Type
           default: forward
         unique_id:
@@ -78,10 +81,18 @@ components:
           default: SELECT * WHERE {?s ?p ?o} LIMIT 10
         visited_nodes:
           items:
-            type: string
+            additionalProperties:
+              type: string
+            type: object
           type: array
           title: Visited Nodes
           default: []
+        link_costs:
+          additionalProperties:
+            type: number
+          type: object
+          title: Link Costs
+          default: {}
         time_to_live:
           type: integer
           title: Time To Live
@@ -90,8 +101,57 @@ components:
           type: string
           title: Keyword
           default: ''
+        results:
+          allOf:
+          - $ref: '#/components/schemas/SearchResponse'
+          default:
+            head:
+              vars: []
+            results:
+              bindings: []
+        time_sent:
+          type: number
+          title: Time Sent
+          default: 0.0
+        time_received:
+          type: number
+          title: Time Received
+          default: 0.0
       type: object
       title: Message
+    ResponseHead:
+      properties:
+        vars:
+          items:
+            type: string
+          type: array
+          title: Vars
+      type: object
+      required:
+      - vars
+      title: ResponseHead
+    ResponseResults:
+      properties:
+        bindings:
+          items:
+            type: object
+          type: array
+          title: Bindings
+      type: object
+      required:
+      - bindings
+      title: ResponseResults
+    SearchResponse:
+      properties:
+        head:
+          $ref: '#/components/schemas/ResponseHead'
+        results:
+          $ref: '#/components/schemas/ResponseResults'
+      type: object
+      required:
+      - head
+      - results
+      title: SearchResponse
     ValidationError:
       properties:
         loc:
