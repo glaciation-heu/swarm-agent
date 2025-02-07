@@ -313,7 +313,7 @@ class SwarmAgent:
 
     def send_message(self, message, url, endpoint="api/v0/create_agent"):
         headers = {"Content-Type": "application/json", "accept": "application/json"}
-        url = f"http://{url}/{endpoint}"
+        url = f"{url}/{endpoint}"
         return requests.post(url, json=message, headers=headers)
 
     def forward_ant_step(self):
