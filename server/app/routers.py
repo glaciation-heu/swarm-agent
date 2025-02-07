@@ -47,7 +47,10 @@ async def receive_message(
     Metadata Service and other Swarm Agents.
     """
     message.time_received = time()
-    logger.debug("router received message {message}", message=message.model_dump())
+    logger.info(
+        "Router received message:\n{message}",
+        message=message.model_dump_json(indent=2),
+    )
 
     queue.put(message)
 
@@ -66,7 +69,7 @@ def swarm_agent_control():
                 "A Backward Ant carried back a response for query '{query}'",
                 query=swarm_agent.query,
             )
-            logger.info(f"Results: {results.model_dump_json(indent=2)}")
+            logger.info(f"Results:\n{results.model_dump_json(indent=2)}")
 
 
 swarm_agent_control_thread = Thread(target=swarm_agent_control, daemon=True)
