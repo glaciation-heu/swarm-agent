@@ -376,7 +376,7 @@ class SwarmAgent:
         logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
         if forward_message.time_to_live > 0 and (
-            self.neighbors[0]["name"] not in forward_message.visited_nodes
+            self.neighbors[0] not in forward_message.visited_nodes
         ):
             logger.debug(
                 "I am sending the message to {node} with IP address {node_ip}",
@@ -421,7 +421,7 @@ class SwarmAgent:
                 (1 - w_d) * t_max / (2 * total_link_costs)
             )
 
-            target_neighbor = self.visited_nodes[self.time_to_live]
+            target_neighbor = self.visited_nodes[self.time_to_live]["name"]
             self.update_in_two_steps(
                 self.this_node,
                 self.keyword,
