@@ -385,7 +385,7 @@ class SwarmAgent:
             )
             forward_message.time_sent = time()
             self.send_message(
-                forward_message.model_dump(), f"{self.neighbors[0]['ip']}:80"
+                forward_message.model_dump(), f"http://{self.neighbors[0]['ip']}:80"
             )
         else:
             visited = (
@@ -399,7 +399,9 @@ class SwarmAgent:
 
         if len(results.results.bindings) > 0:
             backward_message = self.create_backward_message(results)
-            self.send_message(backward_message.model_dump(), f"{self.this_node_ip}:80")
+            self.send_message(
+                backward_message.model_dump(), f"http://{self.this_node_ip}:80"
+            )
 
         # once proper node is chosen we need to send the message further
 
@@ -434,7 +436,7 @@ class SwarmAgent:
             backward_message.time_sent = time()
             self.send_message(
                 backward_message.model_dump(),
-                f"{self.visited_nodes[self.time_to_live-2]['ip']}:80",
+                f"http://{self.visited_nodes[self.time_to_live-2]['ip']}:80",
             )
 
             return False, EMPTY_SEARCH_RESPONSE
