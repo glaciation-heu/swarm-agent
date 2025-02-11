@@ -245,6 +245,8 @@ class SwarmAgent:
         return response, pheromone_delete_query
 
     def add_pheromone_entry(self, local_node_id, keyword, neighbor_id, ph_value):
+        # TODO same association can belong to multiple swarm agents
+        # so it should be distinguishable
         association = "swarm-agent:" + keyword + "---" + neighbor_id
         pheromone_insert_query = f"""INSERT DATA {{
             GRAPH <swarm-agent:pheromones> {{ <swarm:{local_node_id}>
