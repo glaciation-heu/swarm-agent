@@ -62,20 +62,27 @@ def swarm_agent_control():
         message = queue.get()
 
         swarm_agent = SwarmAgent(message, "app/parameters.json")
-        is_backward_ant_done, results = swarm_agent.step()
 
-        if is_backward_ant_done:
-            logger.info(
-                "A Backward Ant carried back a response for query '{query}'",
-                query=swarm_agent.query,
-            )
-            logger.info(f"Results:\n{results.model_dump_json(indent=2)}")
+        try:
+            is_backward_ant_done, results = swarm_agent.step()
+
+            if is_backward_ant_done:
+                logger.info(
+                    "A Backward Ant carried back a response for query '{query}'",
+                    query=swarm_agent.query,
+                )
+                logger.info(f"Results:\n{results.model_dump_json(indent=2)}")
+        except Exception as e:
+            logger.error(str(e))
 
 
 def regular_pheromone_evaporation():
     swarm_agent = SwarmAgent(Message(), "app/parameters.json")
     while True:
-        swarm_agent.pheromone_evaporation()
+        try:
+            swarm_agent.pheromone_evaporation()
+        except Exception as e:
+            logger.error(str(e))
         sleep(5)
 
 

@@ -169,7 +169,11 @@ class SwarmAgent:
         base_url = f"{METADATA_SERVICE_URL}/api/v0/graph"
         full_url = f"{base_url}?{encoded_query}"
 
-        response = requests.get(full_url)
+        try:
+            response = requests.get(full_url)
+        except Exception as e:
+            logger.error(str(e))
+            raise e
 
         if response.status_code == 200:
             return SearchResponse.model_validate_json(response.text)
@@ -317,7 +321,16 @@ class SwarmAgent:
     def send_message(self, message, url, endpoint="api/v0/create_agent"):
         headers = {"Content-Type": "application/json", "accept": "application/json"}
         url = f"{url}/{endpoint}"
-        return requests.post(url, json=message, headers=headers)
+
+        try:
+            response = requests.post(url, json=message, headers=headers)
+            if response.status_code != 200:
+                logger.error(f"Error: {response.status_code}, {response.text}")
+
+            return response
+        except Exception as e:
+            logger.error(str(e))
+            raise e
 
     def forward_ant_step(self):
         if len(self.visited_nodes) > 0:
@@ -455,7 +468,7 @@ class SwarmAgent:
 
         return self.backward_ant_step()
 
-    def pheromone_evaporation(self, parameter_file="app/parameters.json"):
+    def pheromone_evaporation(self):
         pheromone_table = self.get_pheromone_table(self.this_node)
 
         for keyword in pheromone_table:
