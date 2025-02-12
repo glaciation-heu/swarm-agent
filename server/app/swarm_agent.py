@@ -371,6 +371,11 @@ class SwarmAgent:
         goodness_values = self.getGoodnessValues(self.keyword)
         # here we will implement first explore strategy and then the choice between
         # strategies.
+        # Both explore and exploit strategies use goodness_values,
+        # usually we chose one of them by weight
+        # TODO ``exploit'' strategy
+        # TODO ``explore'' strategy
+        # TODO for them getUnvisitedNeighbors will be useful
         logger.debug(
             "goodness_values={goodness_values}", goodness_values=goodness_values
         )
