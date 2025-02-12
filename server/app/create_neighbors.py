@@ -124,12 +124,19 @@ def create_neighbors():
 \t}}
 }}"""
 
-    logger.debug("Clearing named graph <swarm-agent:neighbors>.")
+    logger.info("Clearing named graph <swarm-agent:neighbors>.")
     response = send_request(
         {"query": "CLEAR GRAPH <swarm-agent:neighbors>"}, "post", "api/v0/graph/update"
     )
     logger.debug(f"Response: {response}")
 
+    logger.info("Clearing named graph <swarm-agent:pheromones>.")
+    response = send_request(
+        {"query": "CLEAR GRAPH <swarm-agent:pheromones>"}, "post", "api/v0/graph/update"
+    )
+    logger.debug(f"Response: {response}")
+
+    logger.info("Sending new neighbor list.")
     logger.debug(f"SPARQL Query:\n{query}")
     response = send_request({"query": query}, "post", "api/v0/graph/update")
     logger.debug(f"Response: {response}")
