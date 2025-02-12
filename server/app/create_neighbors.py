@@ -50,6 +50,9 @@ def new_pods_are_same(new_pods):
     else:
         old_pods = []
 
+    if len(old_pods) != len(new_pods):
+        return False
+
     for pod in new_pods:
         if pod not in old_pods:
             return False

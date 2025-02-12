@@ -6,7 +6,6 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 # from . import example, items
 from app import routers
-from app.create_neighbors import create_neighbors
 
 
 class CustomFastAPI(FastAPI):
@@ -40,5 +39,3 @@ app.include_router(routers.router)
 # app.include_router(items.routes.router)
 
 Instrumentator().instrument(app).expose(app)
-
-create_neighbors()
