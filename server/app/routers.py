@@ -77,7 +77,10 @@ def swarm_agent_control():
 
 
 def regular_pheromone_evaporation():
-    swarm_agent = SwarmAgent(Message(), "app/parameters.json")
+    try:
+        swarm_agent = SwarmAgent(Message(), "app/parameters.json")
+    except FileNotFoundError:
+        swarm_agent = SwarmAgent(Message(), "server/app/parameters.json")
     while True:
         try:
             swarm_agent.pheromone_evaporation()

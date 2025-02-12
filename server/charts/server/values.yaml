@@ -1,5 +1,3 @@
-replicaCount: 1
-
 image:
   repository: ""
   tag: ""
@@ -42,5 +40,3 @@ readinessProbe:
   timeoutSeconds: 40
 
 ingressHostName: swarm-agent
-
-controllerKind: DaemonSet

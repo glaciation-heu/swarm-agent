@@ -1,14 +1,13 @@
 from typing import Any, Dict
 
 import json
-import os
 import re
 from datetime import datetime, timezone
+from os import getenv, path
 from time import time
 from urllib.parse import urlencode
 
 import requests
-from kubernetes import client, config
 from loguru import logger
 from rdflib.plugins.sparql.parser import parseQuery
 
@@ -43,8 +42,8 @@ class SwarmAgent:
         """
         self.type = message.message_type
         self.latency = message.time_received - message.time_sent
-        self.this_node = os.environ["MY_POD_NAME"]
-        self.this_node_ip = os.environ["MY_POD_IP"]
+        self.this_node = getenv("MY_POD_NAME", "swarm-agent")
+        self.this_node_ip = getenv("MY_POD_IP", "localhost")
         self.query = message.sparql_query
         self.results = message.results
         self.parameters = self.load_parameters(parameters_file)
@@ -62,7 +61,7 @@ class SwarmAgent:
             else message.unique_id
         )
         self.time_to_live = message.time_to_live  # self.parameters["ttl"]
-        self.neighbors = self.get_swarm_agent_pods()
+        self.neighbors = self.get_swarm_agent_neighbors()
         self.pheromone_table: Dict[str, Any] = {}
 
     def load_parameters(self, file_path: str) -> Any:
@@ -77,7 +76,7 @@ class SwarmAgent:
         :return: The `load_parameters` method is returning a dictionary containing the
         parameters loaded from the JSON file specified by the `file_path` argument.
         """
-        if not os.path.exists(file_path):
+        if not path.exists(file_path):
             raise FileNotFoundError(f"The file {file_path} does not exist.")
         with open(file_path, "r") as file:
             return json.load(file)
@@ -116,34 +115,24 @@ class SwarmAgent:
 
         return keyword
 
-    def get_swarm_agent_pods(self):
+    def get_swarm_agent_neighbors(self):
         """
-        The function `get_swarm_agent_pods` retrieves information about Swarm agent pods
-        in a Kubernetes cluster.
-        :return: The `get_swarm_agent_pods` function returns a list of dictionaries
-        containing information about the Swarm agent pods in the Kubernetes cluster.
-        Each dictionary in the list includes the name and IP address of a Swarm agent
-        pod, excluding the pod with the IP address matching the value of the `MY_POD_IP`
-        environment variable.
+        The function retrieves the neighbors of a swarm agent from a graph database.
+        :return: A list of dictionaries containing the name and IP address of
+        neighboring swarm agents.
         """
-        config.load_incluster_config()
-        v1 = client.CoreV1Api()
+        query = f"""SELECT ?neighbor WHERE {{
+            GRAPH <swarm-agent:neighbors> {{
+                <{self.this_node}:{self.this_node_ip}> <swarm:isNeighborOf> ?neighbor
+            }}
+        }}"""
 
-        label_selector = "app.kubernetes.io/name=swarm-agent"
-
-        pods = v1.list_namespaced_pod(
-            os.environ["MY_POD_NAMESPACE"], label_selector=label_selector
-        )
+        results = self.local_query(query)
 
         swarm_agents = []
-        for pod in pods.items:
-            if pod.status.pod_ip != self.this_node_ip:
-                swarm_agents.append(
-                    {
-                        "name": pod.metadata.name,
-                        "ip": pod.status.pod_ip,
-                    }
-                )
+        for result in results.results.bindings:
+            name, ip = result["neighbor"]["value"].split(":")
+            swarm_agents.append({"name": name, "ip": ip})
 
         return swarm_agents
 
@@ -245,9 +234,7 @@ class SwarmAgent:
         return response, pheromone_delete_query
 
     def add_pheromone_entry(self, local_node_id, keyword, neighbor_id, ph_value):
-        # TODO same association can belong to multiple swarm agents
-        # so it should be distinguishable
-        association = "swarm-agent:" + keyword + "---" + neighbor_id
+        association = f"{local_node_id}:" + keyword + "---" + neighbor_id
         pheromone_insert_query = f"""INSERT DATA {{
             GRAPH <swarm-agent:pheromones> {{ <swarm:{local_node_id}>
             <swarm:hasAssociation> <{association}> .
