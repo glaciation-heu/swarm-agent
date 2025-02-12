@@ -87,6 +87,8 @@ spec:
             value: "{{ .Values.envVariables.metadataService.url }}"
           - name: METADATA_SERVICE_PORT
             value: "{{ .Values.envVariables.metadataService.port }}"
+          - name: PYTHONPATH
+            value: "/code"
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
