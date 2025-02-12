@@ -1,16 +1,13 @@
 # from json import dumps
 from queue import Queue
 from threading import Thread
-from time import sleep, time
+from time import time
 
-import schedule
 from fastapi import APIRouter
 from loguru import logger
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_303_SEE_OTHER
 
-# from app.utils import get_keyword_from_query
-from app.create_neighbors import create_neighbors
 from app.schemas import Message
 from app.swarm_agent import SwarmAgent
 
@@ -77,30 +74,7 @@ def swarm_agent_control():
             logger.error(str(e))
 
 
-def schedule_events():
-    try:
-        swarm_agent = SwarmAgent(Message(), "app/parameters.json")
-    except FileNotFoundError:
-        swarm_agent = SwarmAgent(Message(), "server/app/parameters.json")
-
-    def evap_pheromones():
-        try:
-            swarm_agent.pheromone_evaporation()
-        except Exception as e:
-            logger.error(str(e))
-
-    schedule.every(5).seconds.do(evap_pheromones)
-    schedule.every(5).minutes.do(create_neighbors)
-
-    while True:
-        schedule.run_pending()
-        sleep(1)
-
-
 swarm_agent_control_thread = Thread(target=swarm_agent_control, daemon=True)
 swarm_agent_control_thread.start()
-
-schedule_events_thread = Thread(target=schedule_events, daemon=True)
-schedule_events_thread.start()
 
 # TODO aggregate the results carried back by backward ants

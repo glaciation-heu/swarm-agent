@@ -62,6 +62,31 @@ spec:
             value: "{{ .Values.envVariables.metadataService.url }}"
           - name: METADATA_SERVICE_PORT
             value: "{{ .Values.envVariables.metadataService.port }}"
+        - name: scheduled-events
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["python", "app/schedule_events.py"]
+          env:
+          - name: MY_POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          - name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+          - name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: PHEROMONE_THRESHOLD
+            value: "{{ .Values.envVariables.pheromoneThreshold }}"
+          - name: METADATA_SERVICE_URL
+            value: "{{ .Values.envVariables.metadataService.url }}"
+          - name: METADATA_SERVICE_PORT
+            value: "{{ .Values.envVariables.metadataService.port }}"
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

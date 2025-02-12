@@ -42,7 +42,7 @@ readinessProbe:
 ingressHostName: swarm-agent
 
 envVariables:
-  pheromoneThreshold: 1e-10
+  pheromoneThreshold: 1e-5
   metadataService:
     url: metadata-service
     port: 80
