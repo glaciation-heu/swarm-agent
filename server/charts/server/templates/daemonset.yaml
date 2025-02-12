@@ -56,6 +56,12 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
+          - name: PHEROMONE_THRESHOLD
+            value: "{{ .Values.envVariables.pheromoneThreshold }}"
+          - name: METADATA_SERVICE_URL
+            value: "{{ .Values.envVariables.metadataService.url }}"
+          - name: METADATA_SERVICE_PORT
+            value: "{{ .Values.envVariables.metadataService.port }}"
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

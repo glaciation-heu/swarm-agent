@@ -22,7 +22,11 @@ from app.schemas import EMPTY_SEARCH_RESPONSE, Message, SearchResponse
 # )
 
 
-METADATA_SERVICE_URL = "http://metadata-service:80"
+METADATA_SERVICE_URL = (
+    f"http://{getenv('METADATA_SERVICE_URL', 'metadata-service')}:"
+    f"{getenv('METADATA_SERVICE_PORT', '80')}"
+)
+PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-10"))
 
 
 class SwarmAgent:
@@ -255,9 +259,12 @@ class SwarmAgent:
         response_delete, pheromone_delete_query = self.delete_pheromone_entry(
             local_node_id, keyword, neighbor_id
         )
-        response_add, pheromone_add_query = self.add_pheromone_entry(
-            local_node_id, keyword, neighbor_id, ph_value
-        )
+        if ph_value > PHEROMONE_THRESHOLD:
+            response_add, pheromone_add_query = self.add_pheromone_entry(
+                local_node_id, keyword, neighbor_id, ph_value
+            )
+        else:
+            response_add, pheromone_add_query = None, None
 
         return (
             response_add,

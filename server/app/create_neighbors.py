@@ -94,7 +94,7 @@ def create_neighbors():
         getenv("MY_POD_NAMESPACE", "default"), label_selector=label_selector
     )
 
-    swarm_pods = [f"{pod.metadata.name}:{pod.status.pod_ip}" for pod in pods]
+    swarm_pods = [f"{pod.metadata.name}:{pod.status.pod_ip}" for pod in pods.items]
 
     if new_pods_are_same(swarm_pods):
         logger.info("There is no need to update the neighborhood.")
