@@ -9,7 +9,10 @@ from loguru import logger
 
 from app.schemas import SearchResponse
 
-METADATA_SERVICE_URL = "http://metadata-service:80"
+METADATA_SERVICE_URL = (
+    f"http://{getenv('METADATA_SERVICE_URL', 'metadata-service')}:"
+    f"{getenv('METADATA_SERVICE_PORT', '80')}"
+)
 QUERY_NEIGHBORS = """SELECT DISTINCT ?pod WHERE {
     GRAPH <swarm-agent:neighbors> {
         ?pod <swarm:isNeighborOf> ?neighbor
@@ -118,9 +121,9 @@ def create_neighbors():
 \t}}
 }}"""
 
-    logger.debug("Clearing named graph <swarm:isNeighborOf>.")
+    logger.debug("Clearing named graph <swarm-agent:neighbors>.")
     response = send_request(
-        {"query": "CLEAR GRAPH <swarm:isNeighborOf>"}, "post", "api/v0/graph/update"
+        {"query": "CLEAR GRAPH <swarm-agent:neighbors>"}, "post", "api/v0/graph/update"
     )
     logger.debug(f"Response: {response}")
 
