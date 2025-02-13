@@ -70,8 +70,8 @@ def swarm_agent_control():
                     query=swarm_agent.query,
                 )
                 logger.info(f"Results:\n{results.model_dump_json(indent=2)}")
-        except Exception as e:
-            logger.error(str(e))
+        except Exception:
+            logger.exception("An error occurred")
 
 
 swarm_agent_control_thread = Thread(target=swarm_agent_control, daemon=True)
