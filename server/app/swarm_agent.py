@@ -402,12 +402,13 @@ class SwarmAgent:
         logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
         # implementing exploitation
-        mean_goodness = 0.999 * sum(goodness_values) / len(goodness_values)
+        mean_goodness = sum(goodness_values) / len(goodness_values)
         logger.debug("mean_goodness = {}", mean_goodness)
+        tolerance = 1e-5
         chosen_nodes = [
             node
             for node, goodness in zip(unvisited_neighbors, goodness_values)
-            if goodness >= mean_goodness
+            if goodness >= mean_goodness - tolerance
         ]
         # return the neighbors where the pheromone levels are higher
         # then the average pheromone level of the neighbors
