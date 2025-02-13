@@ -411,6 +411,7 @@ class SwarmAgent:
         ]
         # return the neighbors where the pheromone levels are higher
         # then the average pheromone level of the neighbors
+        logger.debug("chosen nodes: {}", chosen_nodes)
 
         if forward_message.time_to_live > 0 and len(chosen_nodes) > 0:
             for chosen_node in chosen_nodes:
