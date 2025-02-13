@@ -411,7 +411,7 @@ class SwarmAgent:
                 forward_message.time_sent = time()
                 self.send_message(
                     forward_message.model_dump(),
-                    f"http://{unvisited_neighbor[0]['ip']}:80",
+                    f"http://{unvisited_neighbor['ip']}:80",
                 )
         else:
             visited = "Yes!" if len(unvisited_neighbors) == 0 else "No!"
