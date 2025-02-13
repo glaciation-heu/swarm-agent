@@ -375,10 +375,18 @@ class SwarmAgent:
         # usually we chose one of them by weight
         # TODO ``exploit'' strategy
         # TODO ``explore'' strategy
-        # TODO for them getUnvisitedNeighbors will be useful
+
         logger.debug(
             "goodness_values={goodness_values}", goodness_values=goodness_values
         )
+
+        unvisited_neighbors = [
+            neighbor
+            for neighbor in self.neighbors
+            if neighbor not in self.visited_nodes
+        ]
+
+        logger.debug("unvisited neighbors: {}", unvisited_neighbors)
 
         logger.debug(
             "self.time_to_live = {time_to_live}", time_to_live=self.time_to_live
@@ -392,24 +400,22 @@ class SwarmAgent:
 
         logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
-        if forward_message.time_to_live > 0 and (
-            self.neighbors[0] not in forward_message.visited_nodes
-        ):
-            logger.debug(
-                "I am sending the message to {node} with IP address {node_ip}",
-                node=self.neighbors[0]["name"],
-                node_ip=self.neighbors[0]["ip"],
-            )
-            forward_message.time_sent = time()
-            self.send_message(
-                forward_message.model_dump(), f"http://{self.neighbors[0]['ip']}:80"
-            )
+        if forward_message.time_to_live > 0 and len(unvisited_neighbors) > 0:
+            for unvisited_neighbor in unvisited_neighbors:
+                logger.debug(
+                    "I am sending the message to {node} with IP address {node_ip}",
+                    node=unvisited_neighbor["name"],
+                    node_ip=unvisited_neighbor["ip"],
+                )
+                forward_message.time_sent = time()
+                self.send_message(
+                    forward_message.model_dump(),
+                    f"http://{unvisited_neighbor[0]['ip']}:80",
+                )
         else:
-            visited = (
-                "Yes!" if self.neighbors[0] in forward_message.visited_nodes else "No!"
-            )
+            visited = "Yes!" if len(unvisited_neighbors) == 0 else "No!"
             logger.debug(
-                "Ant terminated! ttl={ttl}, visited neighbor {visited}",
+                "Ant terminated! ttl={ttl}, visited all neighbors {visited}",
                 ttl=forward_message.time_to_live,
                 visited=visited,
             )
