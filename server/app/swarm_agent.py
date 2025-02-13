@@ -385,7 +385,7 @@ class SwarmAgent:
             for neighbor in self.neighbors
             if neighbor not in self.visited_nodes
         ]
-
+        logger.debug("my neighbors: {}", self.neighbors)
         logger.debug("visited neighbors: {}", self.visited_nodes)
         logger.debug("unvisited neighbors: {}", unvisited_neighbors)
 
