@@ -403,7 +403,7 @@ class SwarmAgent:
 
         # implementing exploitation
         mean_goodness = sum(goodness_values) / len(goodness_values)
-
+        logger.debug("mean_goodness = {}", mean_goodness)
         chosen_nodes = [
             node
             for node, goodness in zip(unvisited_neighbors, goodness_values)
