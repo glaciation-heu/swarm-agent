@@ -402,7 +402,7 @@ class SwarmAgent:
         logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
         # implementing exploitation
-        mean_goodness = 0.999*sum(goodness_values) / len(goodness_values)
+        mean_goodness = 0.999 * sum(goodness_values) / len(goodness_values)
         logger.debug("mean_goodness = {}", mean_goodness)
         chosen_nodes = [
             node
