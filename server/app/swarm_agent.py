@@ -401,17 +401,28 @@ class SwarmAgent:
 
         logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
-        if forward_message.time_to_live > 0 and len(unvisited_neighbors) > 0:
-            for unvisited_neighbor in unvisited_neighbors:
+        # implementing exploitation
+        mean_goodness = sum(goodness_values) / len(goodness_values)
+
+        chosen_nodes = [
+            node
+            for node, goodness in zip(unvisited_neighbors, goodness_values)
+            if goodness >= mean_goodness
+        ]
+        # return the neighbors where the pheromone levels are higher
+        # then the average pheromone level of the neighbors
+
+        if forward_message.time_to_live > 0 and len(chosen_nodes) > 0:
+            for chosen_node in chosen_nodes:
                 logger.debug(
                     "I am sending the message to {node} with IP address {node_ip}",
-                    node=unvisited_neighbor["name"],
-                    node_ip=unvisited_neighbor["ip"],
+                    node=chosen_node["name"],
+                    node_ip=chosen_node["ip"],
                 )
                 forward_message.time_sent = time()
                 self.send_message(
                     forward_message.model_dump(),
-                    f"http://{unvisited_neighbor['ip']}:80",
+                    f"http://{chosen_node['ip']}:80",
                 )
         else:
             visited = "Yes!" if len(unvisited_neighbors) == 0 else "No!"
