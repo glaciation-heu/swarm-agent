@@ -462,6 +462,7 @@ class SwarmAgent:
     def explore(self, goodness_values, unvisited_neighbors):
         total_goodness = sum(goodness_values)
         probabilities = [value / total_goodness for value in goodness_values]
+        logger.debug("probabilities: {}", probabilities)
         is_chosen = [random.random() <= prob for prob in probabilities]
         chosen_nodes = [
             neighbor for i, neighbor in enumerate(unvisited_neighbors) if is_chosen[i]
@@ -469,7 +470,7 @@ class SwarmAgent:
         if len(chosen_nodes) == 0:
             logger.debug(
                 "No nodes chosen through probabilities. Reverting to exploitation."
-                )
+                )           
             chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
         return chosen_nodes
 
