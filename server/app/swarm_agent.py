@@ -470,7 +470,7 @@ class SwarmAgent:
         if len(chosen_nodes) == 0:
             logger.debug(
                 "No nodes chosen through probabilities. Reverting to exploitation."
-                )
+            )
             chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
         return chosen_nodes
 
