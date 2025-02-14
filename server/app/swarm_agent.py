@@ -375,7 +375,7 @@ class SwarmAgent:
         logger.debug("my neighbors: {}", self.neighbors)
         logger.debug("visited neighbors: {}", self.visited_nodes)
         logger.debug("unvisited neighbors: {}", unvisited_neighbors)
-        if len(unvisited_neighbors)>0:
+        if len(unvisited_neighbors) > 0:
             goodness_values = self.getGoodnessValuesUnvisited(unvisited_neighbors)
 
             logger.debug(
@@ -408,7 +408,7 @@ class SwarmAgent:
             # then the average pheromone level of the neighbors
             logger.debug("chosen nodes: {}", chosen_nodes)
         else:
-            chosen_nodes=[]
+            chosen_nodes = []
 
         if forward_message.time_to_live > 0 and len(chosen_nodes) > 0:
             for chosen_node in chosen_nodes:
