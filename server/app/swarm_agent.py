@@ -467,6 +467,9 @@ class SwarmAgent:
             neighbor for i, neighbor in enumerate(unvisited_neighbors) if is_chosen[i]
         ]
         if len(chosen_nodes) == 0:
+            logger.debug(
+                "No nodes chosen through probabilities. Reverting to exploitation."
+                )
             chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
         return chosen_nodes
 
