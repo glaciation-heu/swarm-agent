@@ -1,6 +1,7 @@
 from typing import Any, Dict
 
 import json
+import random
 import re
 from datetime import datetime, timezone
 from os import getenv, path
@@ -368,26 +369,18 @@ class SwarmAgent:
                 keyword=self.keyword,
                 content=self.pheromone_table[self.keyword],
             )
-        goodness_values = self.getGoodnessValues(self.keyword)
-        # here we will implement first explore strategy and then the choice between
-        # strategies.
-        # Both explore and exploit strategies use goodness_values,
-        # usually we chose one of them by weight
-        # TODO ``exploit'' strategy
-        # TODO ``explore'' strategy
+
+        unvisited_neighbors = self.getUnvisitedNeighbors()
+
+        logger.debug("my neighbors: {}", self.neighbors)
+        logger.debug("visited neighbors: {}", self.visited_nodes)
+        logger.debug("unvisited neighbors: {}", unvisited_neighbors)
+
+        goodness_values = self.getGoodnessValuesUnvisited(unvisited_neighbors)
 
         logger.debug(
             "goodness_values={goodness_values}", goodness_values=goodness_values
         )
-
-        unvisited_neighbors = [
-            neighbor
-            for neighbor in self.neighbors
-            if neighbor not in self.visited_nodes
-        ]
-        logger.debug("my neighbors: {}", self.neighbors)
-        logger.debug("visited neighbors: {}", self.visited_nodes)
-        logger.debug("unvisited neighbors: {}", unvisited_neighbors)
 
         logger.debug(
             "self.time_to_live = {time_to_live}", time_to_live=self.time_to_live
@@ -401,15 +394,16 @@ class SwarmAgent:
 
         logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
-        # implementing exploitation
-        mean_goodness = sum(goodness_values) / len(goodness_values)
-        logger.debug("mean_goodness = {}", mean_goodness)
-        tolerance = 1e-5
-        chosen_nodes = [
-            node
-            for node, goodness in zip(unvisited_neighbors, goodness_values)
-            if goodness >= mean_goodness - tolerance
-        ]
+        if random.random() < self.parameters["w_exploit"]:
+            # implementing exploitation
+            logger.debug("Exploitation chosen!")
+            chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
+        else:
+            # implementing exploration
+            logger.debug("Exploration chosen!")
+            chosen_nodes = self.explore(goodness_values, unvisited_neighbors)
+
+            # chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
         # return the neighbors where the pheromone levels are higher
         # then the average pheromone level of the neighbors
         logger.debug("chosen nodes: {}", chosen_nodes)
@@ -444,6 +438,49 @@ class SwarmAgent:
         # once proper node is chosen we need to send the message further
 
         return False, EMPTY_SEARCH_RESPONSE
+
+    def getUnvisitedNeighbors(self):
+        unvisited_neighbors = [
+            neighbor
+            for neighbor in self.neighbors
+            if neighbor not in self.visited_nodes
+        ]
+
+        return unvisited_neighbors
+
+    def getGoodnessValuesUnvisited(self, unvisited_neighbors):
+        goodness_values = []
+
+        for neighbor in unvisited_neighbors:
+            goodness_values.append(
+                self.pheromone_table[self.keyword][neighbor["name"]]
+                * self.parameters["beta"]
+            )
+
+        return goodness_values
+
+    def explore(self, goodness_values, unvisited_neighbors):
+        total_goodness = sum(goodness_values)
+        probabilities = [value / total_goodness for value in goodness_values]
+        is_chosen = [random.random() <= prob for prob in probabilities]
+        chosen_nodes = [
+            neighbor for i, neighbor in enumerate(unvisited_neighbors) if is_chosen[i]
+        ]
+        if len(chosen_nodes) == 0:
+            chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
+        return chosen_nodes
+
+    def exploit(self, goodness_values, unvisited_neighbors):
+        mean_goodness = sum(goodness_values) / len(goodness_values)
+        logger.debug("mean_goodness = {}", mean_goodness)
+        tolerance = 1e-5
+        chosen_nodes = [
+            node
+            for node, goodness in zip(unvisited_neighbors, goodness_values)
+            if goodness >= mean_goodness - tolerance
+        ]
+
+        return chosen_nodes
 
     def backward_ant_step(self):
         # hardcoded parameters for now
