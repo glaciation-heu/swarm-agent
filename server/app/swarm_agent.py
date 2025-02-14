@@ -375,38 +375,40 @@ class SwarmAgent:
         logger.debug("my neighbors: {}", self.neighbors)
         logger.debug("visited neighbors: {}", self.visited_nodes)
         logger.debug("unvisited neighbors: {}", unvisited_neighbors)
+        if len(unvisited_neighbors)>0:
+            goodness_values = self.getGoodnessValuesUnvisited(unvisited_neighbors)
 
-        goodness_values = self.getGoodnessValuesUnvisited(unvisited_neighbors)
+            logger.debug(
+                "goodness_values={goodness_values}", goodness_values=goodness_values
+            )
 
-        logger.debug(
-            "goodness_values={goodness_values}", goodness_values=goodness_values
-        )
+            logger.debug(
+                "self.time_to_live = {time_to_live}", time_to_live=self.time_to_live
+            )
 
-        logger.debug(
-            "self.time_to_live = {time_to_live}", time_to_live=self.time_to_live
-        )
+            forward_message = self.create_forward_message()
 
-        forward_message = self.create_forward_message()
+            logger.debug(
+                "forward_message.time_to_live = {ttl}", ttl=forward_message.time_to_live
+            )
 
-        logger.debug(
-            "forward_message.time_to_live = {ttl}", ttl=forward_message.time_to_live
-        )
+            logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
 
-        logger.debug("forward_message = {fm}", fm=forward_message.model_dump())
+            if random.random() < self.parameters["w_exploit"]:
+                # implementing exploitation
+                logger.debug("Exploitation chosen!")
+                chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
+            else:
+                # implementing exploration
+                logger.debug("Exploration chosen!")
+                chosen_nodes = self.explore(goodness_values, unvisited_neighbors)
 
-        if random.random() < self.parameters["w_exploit"]:
-            # implementing exploitation
-            logger.debug("Exploitation chosen!")
-            chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
+                # chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
+            # return the neighbors where the pheromone levels are higher
+            # then the average pheromone level of the neighbors
+            logger.debug("chosen nodes: {}", chosen_nodes)
         else:
-            # implementing exploration
-            logger.debug("Exploration chosen!")
-            chosen_nodes = self.explore(goodness_values, unvisited_neighbors)
-
-            # chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
-        # return the neighbors where the pheromone levels are higher
-        # then the average pheromone level of the neighbors
-        logger.debug("chosen nodes: {}", chosen_nodes)
+            chosen_node=[]
 
         if forward_message.time_to_live > 0 and len(chosen_nodes) > 0:
             for chosen_node in chosen_nodes:
