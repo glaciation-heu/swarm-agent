@@ -118,7 +118,7 @@ def create_neighbors():
                 "\n\t\t" if len(triples) > 0 else ""
             ) + f"<{node}> <swarm:isNeighborOf> <{neighbor}> ."
 
-    triples += "\n\t\t" + f"{swarm_pods[1]} <swarm:hasKnowledgeOf> <Car1> ."
+    triples += "\n\t\t" + f"<{swarm_pods[1]}> <swarm:hasKnowledgeOf> <Car1> ."
     triples += "\n\t\t" + "<Car1> <swarm:hasColor> <Blue> ."
 
     query = f"""INSERT DATA {{
