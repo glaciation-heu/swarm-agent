@@ -11,7 +11,7 @@ serviceAccount:
   create: true
   automount: true
   annotations: {}
-  name: ""
+  name: "swarm-agent"
 
 podAnnotations: {}
 podLabels: {}
