@@ -88,17 +88,23 @@ class SwarmAgent:
 
     def transform_query_to_keyword(self, query):
         """
-        Transforms a SPARQL-like query containing RDF-style
-        triples inside `{}` into keywords.
+        Transforms a SPARQL-like query containing RDF-style triples
+        and a named graph into keywords.
 
         Supports:
         - Multi-line queries
         - Chained queries with multiple `{}` blocks
         - Multiple triples within a single `{}` block
+        - Named graphs
 
         :param query: A SPARQL-like query string.
         :return: A keyword string representing the extracted parts.
         """
+
+        # Pattern to capture the named graph, if present
+        graph_pattern = r"GRAPH\s*<([^>]+)>"
+        graph_match = re.search(graph_pattern, query)
+        graph_name = graph_match.group(1) if graph_match else None
 
         pattern = r"\{([^}]*)\}"  # Matches content inside `{}`
 
@@ -134,7 +140,13 @@ class SwarmAgent:
                     else ""
                 )
 
+                # Generate the base keyword
                 keyword = "_".join(filter(None, [sub, pre, obj])) or "all"
+
+                # If there's a graph name, add it to the keyword
+                if graph_name:
+                    keyword = f"{graph_name}_{keyword}"
+
                 keywords.append(keyword)
 
         return ",".join(keywords)  # Join multiple keywords with a comma
