@@ -343,6 +343,9 @@ class SwarmAgent:
         else:
             self.pheromone_table[self.keyword] = {}
 
+            logger.debug("I have {} neighbors", len(self.neighbors))
+            logger.debug("My neighbors: {}", self.neighbors)
+
             for neighbor in self.neighbors:
                 self.pheromone_table[self.keyword][neighbor["name"]] = 0.1
                 logger.debug("I am updating the pheromone table...")
