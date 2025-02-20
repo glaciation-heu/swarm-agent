@@ -119,7 +119,7 @@ def create_neighbors():
             ) + f"<{node}> <swarm:isNeighborOf> <{neighbor}> ."
 
     triples += "\n\t\t" + f"<{swarm_pods[1]}> <swarm:hasKnowledgeOf> <Car1> ."
-    triples += "\n\t\t" + "<Car1> <swarm:hasColor> <Blue> ."
+    triples += "\n\t\t" + "<swarm:Car1> <swarm:hasColor> <swarm:Blue> ."
 
     query = f"""INSERT DATA {{
 \tGRAPH <swarm-agent:neighbors> {{
