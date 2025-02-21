@@ -354,7 +354,8 @@ class SwarmAgent:
             node_id = node_id.split(":")[0]
         logger.debug(
             "Results found are for node: {node_id}, this node is {this_node}",
-            node_id=node_id, this_node=self.this_node
+            node_id=node_id,
+            this_node=self.this_node,
         )
         if node_id != self.this_node:
             results = EMPTY_SEARCH_RESPONSE
