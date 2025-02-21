@@ -348,9 +348,13 @@ class SwarmAgent:
             self.link_costs[self.this_node] = self.latency
         self.visited_nodes.append({"name": self.this_node, "ip": self.this_node_ip})
         results = self.local_query()
-
+        node_id = None
         for result in results.results.bindings:
             node_id = result["swarmNode"]["value"]
+            node_id = node_id.split(":")[0]
+        logger.debug(
+            "Results found are for node: {node_id}, this node is {self.this_node}"
+        )
         if node_id != self.this_node:
             results = EMPTY_SEARCH_RESPONSE
 
