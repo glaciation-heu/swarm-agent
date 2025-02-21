@@ -86,70 +86,49 @@ class SwarmAgent:
         with open(file_path, "r") as file:
             return json.load(file)
 
-    def transform_query_to_keyword(self, query):
+    def transform_query_to_keyword(query):
         """
-        Transforms a SPARQL-like query containing RDF-style triples
-        and a named graph into keywords.
-
-        Supports:
-        - Multi-line queries
-        - Chained queries with multiple `{}` blocks
-        - Multiple triples within a single `{}` block
-        - Named graphs
-
-        :param query: A SPARQL-like query string.
-        :return: A keyword string representing the extracted parts.
-        """
-
-        # Pattern to capture the named graph, if present
-        graph_pattern = r"GRAPH\s*<([^>]+)>"
-        graph_match = re.search(graph_pattern, query)
-        graph_name = graph_match.group(1) if graph_match else None
-
-        pattern = r"\{([^}]*)\}"  # Matches content inside `{}`
-
-        matches = re.findall(pattern, query, re.DOTALL)  # Capture multi-line content
+        Transforms a SPARQL-like query into a keyword string.
+        Extracts the named graph, subject, predicate, and object.
+        
+        :param query: A SPARQL query string.
+        :return: A formatted keyword string.
+        """ ; 
+        
+        # Extract the named graph, if present
+        graph_pattern = r"GRAPH\s*<([^>]+)>\s*\{([^}]*)\}"
+        matches = re.findall(graph_pattern, query, re.DOTALL)
 
         keywords = []
 
-        for match in matches:
-            # Remove newlines, dots, and split into statements
-            match_cleaned = match.replace("\n", " ").replace(".", "").strip()
-            triples = [
-                t.strip() for t in match_cleaned.split("  ") if t
-            ]  # Split by double spaces (approximate triple separation)
+        for graph_name, graph_content in matches:
+            # Clean up the extracted triples (remove newlines and extra spaces)
+            graph_content = graph_content.replace("\n", " ").strip()
+
+            # Extract triples (split by " . ")
+            triples = [t.strip() for t in graph_content.split(" . ") if t]
 
             for triple in triples:
                 parts = triple.split()
                 if len(parts) < 3:
                     continue  # Skip malformed triples
 
-                raw_sub, raw_pre, raw_obj = parts[
-                    :3
-                ]  # Extract subject, predicate, object
+                raw_sub, raw_pre, raw_obj = parts[:3]
 
+                # Process components, remove `<` and `>` from IRIs
                 sub = raw_sub if not raw_sub.startswith("?") else ""
-                pre = (
-                    re.sub(r"[<>]", "", raw_pre).split("/")[-1]
-                    if not raw_pre.startswith("?")
-                    else ""
-                )
-                obj = (
-                    raw_obj.split("^^")[0].replace('"', "")
-                    if not raw_obj.startswith("?")
-                    else ""
-                )
+                pre = raw_pre.strip("<>") if not raw_pre.startswith("?") else ""
+                obj = raw_obj.split("^^")[0].strip("<>").replace('"', "") if not raw_obj.startswith("?") else ""
 
-                # Generate the base keyword
-                keyword = "_".join(filter(None, [sub, pre, obj])) or "all"
+                # Create keyword
+                keyword = "_".join(filter(None, [sub, pre, obj]))
 
-                # If there's a graph name, add it to the keyword
-                if graph_name:
-                    keyword = f"{graph_name}_{keyword}"
+                # Prefix with graph name if present
+                keyword = f"{graph_name}_{keyword}"
 
                 keywords.append(keyword)
 
-        return ",".join(keywords)  # Join multiple keywords with a comma
+        return ",".join(keywords) if keywords else "all"
 
     def get_swarm_agent_neighbors(self):
         """
