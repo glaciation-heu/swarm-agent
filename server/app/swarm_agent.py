@@ -90,11 +90,11 @@ class SwarmAgent:
         """
         Transforms a SPARQL-like query into a keyword string.
         Extracts the named graph, subject, predicate, and object.
-        
+
         :param query: A SPARQL query string.
         :return: A formatted keyword string.
-        """ ; 
-        
+        """
+
         # Extract the named graph, if present
         graph_pattern = r"GRAPH\s*<([^>]+)>\s*\{([^}]*)\}"
         matches = re.findall(graph_pattern, query, re.DOTALL)
@@ -118,7 +118,11 @@ class SwarmAgent:
                 # Process components, remove `<` and `>` from IRIs
                 sub = raw_sub if not raw_sub.startswith("?") else ""
                 pre = raw_pre.strip("<>") if not raw_pre.startswith("?") else ""
-                obj = raw_obj.split("^^")[0].strip("<>").replace('"', "") if not raw_obj.startswith("?") else ""
+                obj = (
+                    raw_obj.split("^^")[0].strip("<>").replace('"', "")
+                    if not raw_obj.startswith("?")
+                    else ""
+                )
 
                 # Create keyword
                 keyword = "_".join(filter(None, [sub, pre, obj]))
