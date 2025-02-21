@@ -348,6 +348,12 @@ class SwarmAgent:
             self.link_costs[self.this_node] = self.latency
         self.visited_nodes.append({"name": self.this_node, "ip": self.this_node_ip})
         results = self.local_query()
+        
+        for result in results.results.bindings:
+            node_id=result['swarmNode']['value']
+        if node_id != self.this_node:
+            results = EMPTY_SEARCH_RESPONSE
+        
         self.pheromone_table = self.get_pheromone_table(self.this_node)
         if self.keyword in self.pheromone_table:
             logger.debug(
