@@ -447,10 +447,23 @@ class SwarmAgent:
                     node_ip=chosen_node["ip"],
                 )
                 forward_message.time_sent = time()
-                self.send_message(
-                    forward_message.model_dump(),
-                    f"http://{chosen_node['ip']}:80",
-                )
+                try:
+                    self.send_message(
+                        forward_message.model_dump(),
+                        f"http://{chosen_node['ip']}:80",
+                    )
+                    logger.debug(
+                        "Successfully sent message to {node} with IP address {node_ip}",
+                        node=chosen_node["name"],
+                        node_ip=chosen_node["ip"],
+                    )
+                except ConnectionError:
+                    logger.exception(
+                        "Connection error occurred while trying to send the message \
+                            to {node} with IP address {node_ip}!",
+                        node=chosen_node["name"],
+                        node_ip=chosen_node["ip"],
+                    )
         else:
             visited = "Yes!" if len(unvisited_neighbors) == 0 else "No!"
             logger.debug(
