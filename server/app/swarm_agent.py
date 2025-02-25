@@ -543,8 +543,16 @@ class SwarmAgent:
             z = w_d * len(self.results.results.bindings) / r_max + (
                 (1 - w_d) * t_max / (2 * total_link_costs)
             )
-
             target_neighbor = self.visited_nodes[self.time_to_live]["name"]
+
+            logger.debug(
+                "I drop {z} amount of pheromone for neighbor {neighbor}\
+                    and keyword {keyword}",
+                z=z,
+                neighbor=target_neighbor,
+                keyword=self.keyword,
+            )
+
             self.update_in_two_steps(
                 self.this_node,
                 self.keyword,
