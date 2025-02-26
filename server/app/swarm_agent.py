@@ -28,6 +28,7 @@ METADATA_SERVICE_URL = (
     f"{getenv('METADATA_SERVICE_PORT', '80')}"
 )
 PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-10"))
+PARAMETER_ENV_VARIABLES = {"PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"}}
 
 
 class SwarmAgent:
@@ -84,7 +85,12 @@ class SwarmAgent:
         if not path.exists(file_path):
             raise FileNotFoundError(f"The file {file_path} does not exist.")
         with open(file_path, "r") as file:
-            return json.load(file)
+            params = json.load(file)
+            for param in PARAMETER_ENV_VARIABLES:
+                params[PARAMETER_ENV_VARIABLES[param]["key"]] = getenv(
+                    param, PARAMETER_ENV_VARIABLES[param]["default"]
+                )
+            return params
 
     def transform_query_to_keyword(self, query):
         """
