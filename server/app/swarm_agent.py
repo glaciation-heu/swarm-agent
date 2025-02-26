@@ -271,14 +271,26 @@ class SwarmAgent:
         return response, pheromone_insert_query
 
     def update_in_two_steps(self, local_node_id, keyword, neighbor_id, ph_value):
+        logger.debug("deleting old pheromone value...")
         response_delete, pheromone_delete_query = self.delete_pheromone_entry(
             local_node_id, keyword, neighbor_id
         )
+        logger.debug("writing new pheromone value...")
         if ph_value > PHEROMONE_THRESHOLD:
+            logger.debug(
+                "ph_value LARGER than threshold: {ph_value} > {threshold}",
+                ph_value=ph_value,
+                threshold=PHEROMONE_THRESHOLD,
+            )
             response_add, pheromone_add_query = self.add_pheromone_entry(
                 local_node_id, keyword, neighbor_id, ph_value
             )
         else:
+            logger.debug(
+                "ph_value SMALLER than threshold: {ph_value} < {threshold}",
+                ph_value=ph_value,
+                threshold=PHEROMONE_THRESHOLD,
+            )
             response_add, pheromone_add_query = None, None
 
         return (
@@ -585,8 +597,18 @@ class SwarmAgent:
     def pheromone_evaporation(self):
         pheromone_table = self.get_pheromone_table(self.this_node)
 
+        logger.debug("I will evaporate pheromones!")
+        logger.debug("The keywords are {}", list(pheromone_table.keys()))
+
         for keyword in pheromone_table:
             for neighbor in pheromone_table[keyword]:
+                logger.debug(
+                    "I evaporate {keyword} for {neighbor}. New amount: {ph_val}",
+                    keyword=keyword,
+                    neighbor=neighbor,
+                    ph_val=pheromone_table[keyword][neighbor]
+                    * (1 - self.parameters["p"]),
+                )
                 self.update_in_two_steps(
                     self.this_node,
                     keyword,
