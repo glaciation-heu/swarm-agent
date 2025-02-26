@@ -23,7 +23,7 @@ def evap_pheromones():
 
 
 schedule.every(5).seconds.do(evap_pheromones)
-schedule.every(5).minutes.do(create_neighbors)
+schedule.every(1).minutes.do(create_neighbors)
 
 if __name__ == "__main__":
     while True:

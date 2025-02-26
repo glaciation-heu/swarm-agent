@@ -458,7 +458,7 @@ class SwarmAgent:
         else:
             chosen_nodes = []
 
-        if forward_message.time_to_live > 0 and len(chosen_nodes) > 0:
+        if len(chosen_nodes) > 0 and self.time_to_live > 1:
             for chosen_node in chosen_nodes:
                 logger.debug(
                     "I am sending the message to {node} with IP address {node_ip}",
@@ -487,7 +487,7 @@ class SwarmAgent:
             visited = "Yes!" if len(unvisited_neighbors) == 0 else "No!"
             logger.debug(
                 "Ant terminated! ttl={ttl}, visited all neighbors {visited}",
-                ttl=forward_message.time_to_live,
+                ttl=self.time_to_live - 1,
                 visited=visited,
             )
 
