@@ -59,9 +59,9 @@ def swarm_agent_control():
     while True:
         message = queue.get()
 
-        swarm_agent = SwarmAgent(message, "app/parameters.json")
-
         try:
+            swarm_agent = SwarmAgent(message, "app/parameters.json")
+
             is_backward_ant_done, results = swarm_agent.step()
 
             if is_backward_ant_done:
