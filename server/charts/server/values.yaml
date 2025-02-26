@@ -46,3 +46,4 @@ envVariables:
   metadataService:
     url: metadata-service
     port: 80
+  pheromoneEvaporation: 0.01

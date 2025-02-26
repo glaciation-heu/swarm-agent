@@ -62,6 +62,8 @@ spec:
             value: "{{ .Values.envVariables.metadataService.url }}"
           - name: METADATA_SERVICE_PORT
             value: "{{ .Values.envVariables.metadataService.port }}"
+          - name: PHEROMONE_EVAPORATION
+            value: "{{ .Values.envVariables.pheromoneEvaporation }}"
         - name: scheduled-events
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -89,6 +91,8 @@ spec:
             value: "{{ .Values.envVariables.metadataService.port }}"
           - name: PYTHONPATH
             value: "/code"
+          - name: PHEROMONE_EVAPORATION
+            value: "{{ .Values.envVariables.pheromoneEvaporation }}"
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

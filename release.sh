@@ -51,6 +51,9 @@ NEW_VERSION=$(IFS='.'; echo "${version_parts[*]}")
 echo "Updating version: $CURRENT_VERSION -> $NEW_VERSION"
 echo "$NEW_VERSION" > $VERSION_FILE
 
+echo "Updating 'api/openapi.yaml'"
+poetry --directory server run python ../tools/extract_openapi.py app.main:app --app-dir ../server --out ../api/openapi.yaml --app_version_file ../$VERSION_FILE
+
 # 3. Stage changes
 echo "Staging changes..."
 git add $VERSION_FILE
