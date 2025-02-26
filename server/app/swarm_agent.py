@@ -27,7 +27,7 @@ METADATA_SERVICE_URL = (
     f"http://{getenv('METADATA_SERVICE_URL', 'metadata-service')}:"
     f"{getenv('METADATA_SERVICE_PORT', '80')}"
 )
-PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-10"))
+PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-5"))
 PARAMETER_ENV_VARIABLES = {"PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"}}
 
 
@@ -87,9 +87,10 @@ class SwarmAgent:
         with open(file_path, "r") as file:
             params = json.load(file)
             for param in PARAMETER_ENV_VARIABLES:
-                params[PARAMETER_ENV_VARIABLES[param]["key"]] = getenv(
-                    param, PARAMETER_ENV_VARIABLES[param]["default"]
+                params[PARAMETER_ENV_VARIABLES[param]["key"]] = float(
+                    getenv(param, PARAMETER_ENV_VARIABLES[param]["default"])
                 )
+            logger.info(f"Parameters loaded:\n{json.dumps(params, indent=2)}")
             return params
 
     def transform_query_to_keyword(self, query):
