@@ -60,6 +60,7 @@ git add $VERSION_FILE
 
 # Add modified Python files in the server directory
 git add server/**/*.py
+git add api/openapi.yaml
 
 # 4. Commit changes
 echo "Committing changes..."
