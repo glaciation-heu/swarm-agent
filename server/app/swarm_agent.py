@@ -492,8 +492,10 @@ class SwarmAgent:
             )
 
         if len(results.results.bindings) > 0:
+            logger.debug("I am creating a backward ant...")
             backward_message = self.create_backward_message(results)
             backward_message.time_sent = time()
+            logger.debug("Sending backward message...")
             self.send_message(
                 backward_message.model_dump(), f"http://{self.this_node_ip}:80"
             )
