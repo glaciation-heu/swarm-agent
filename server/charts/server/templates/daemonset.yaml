@@ -56,6 +56,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
+          - name: MY_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
           - name: PHEROMONE_THRESHOLD
             value: "{{ .Values.envVariables.pheromoneThreshold }}"
           - name: METADATA_SERVICE_URL
@@ -83,6 +87,10 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
+          - name: MY_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
           - name: PHEROMONE_THRESHOLD
             value: "{{ .Values.envVariables.pheromoneThreshold }}"
           - name: METADATA_SERVICE_URL

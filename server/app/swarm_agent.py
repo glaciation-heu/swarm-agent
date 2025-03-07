@@ -13,6 +13,7 @@ from loguru import logger
 from rdflib.plugins.sparql.parser import parseQuery
 
 from app.schemas import EMPTY_SEARCH_RESPONSE, Message, SearchResponse
+from app.utils import metadata_service_url
 
 # from app.schemas import (
 #     ResponseHead,
@@ -22,11 +23,6 @@ from app.schemas import EMPTY_SEARCH_RESPONSE, Message, SearchResponse
 #     UpdateRequestBody,
 # )
 
-
-METADATA_SERVICE_URL = (
-    f"http://{getenv('METADATA_SERVICE_URL', 'metadata-service')}:"
-    f"{getenv('METADATA_SERVICE_PORT', '80')}"
-)
 PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-5"))
 PARAMETER_ENV_VARIABLES = {"PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"}}
 
@@ -181,7 +177,7 @@ class SwarmAgent:
 
         params = {"query": query}
         encoded_query = urlencode(params)
-        base_url = f"{METADATA_SERVICE_URL}/api/v0/graph"
+        base_url = f"{metadata_service_url()}/api/v0/graph"
         full_url = f"{base_url}?{encoded_query}"
 
         try:
@@ -254,7 +250,7 @@ class SwarmAgent:
         params = {"query": pheromone_delete_query}
 
         response = self.send_message(
-            params, METADATA_SERVICE_URL, "api/v0/graph/update"
+            params, metadata_service_url(), "api/v0/graph/update"
         )
 
         return response, pheromone_delete_query
@@ -272,7 +268,7 @@ class SwarmAgent:
         params = {"query": pheromone_insert_query}
 
         response = self.send_message(
-            params, METADATA_SERVICE_URL, "api/v0/graph/update"
+            params, metadata_service_url(), "api/v0/graph/update"
         )
 
         return response, pheromone_insert_query
