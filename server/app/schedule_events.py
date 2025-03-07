@@ -22,8 +22,9 @@ def evap_pheromones():
         logger.error(str(e))
 
 
-schedule.every(5).seconds.do(evap_pheromones)
-schedule.every(1).minutes.do(create_neighbors)
+# TODO data movement recommendation - regular pheromone map checks
+schedule.every(60).seconds.do(evap_pheromones)
+schedule.every(60).seconds.do(create_neighbors)
 
 if __name__ == "__main__":
     while True:

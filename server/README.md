@@ -1,5 +1,5 @@
 # Server application
-
+<!-- TODO update documentation -->
 ## Requirements
 Python 3.10+
 
@@ -136,7 +136,7 @@ https://helm.sh/ru/docs/
 ## OpenaAPI schema
 To manually generate the OpenAPI schema, execute the command from the project root folder:
 ```bash
-poetry --directory server run python ./tools/extract_openapi.py app.main:app --app-dir ./server --out ./api/openapi.yaml --app_version_file ./VERSION
+poetry --directory server run python ../tools/extract_openapi.py app.main:app --app-dir ../server --out ../api/openapi.yaml --app_version_file ../VERSION
 ```
 
 ## Prometheus metrics
