@@ -66,3 +66,39 @@ def local_query(query: str) -> SearchResponse:
         logger.error(f"Error: {response.status_code}, {response.text}")
 
     return EMPTY_SEARCH_RESPONSE
+
+
+def send_message(message, url, endpoint="api/v0/create_agent"):
+    url = f"{url}/{endpoint}"
+
+    try:
+        response = requests.post(url, json=message)
+        if response.status_code != 200:
+            logger.error(f"Error: {response.status_code}, {response.text}")
+
+        return response
+    except Exception as e:
+        logger.exception("An error occured")
+        raise e
+
+
+def get_swarm_agent_neighbors(this_node, this_node_ip):
+    """
+    The function retrieves the neighbors of a swarm agent from a graph database.
+    :return: A list of dictionaries containing the name and IP address of
+    neighboring swarm agents.
+    """
+    query = f"""SELECT ?neighbor WHERE {{
+        GRAPH <swarm-agent:neighbors> {{
+            <{this_node}:{this_node_ip}> <swarm:isNeighborOf> ?neighbor .
+        }}
+    }}"""
+
+    results = local_query(query)
+
+    swarm_agents = []
+    for result in results.results.bindings:
+        name, ip = result["neighbor"]["value"].split(":")
+        swarm_agents.append({"name": name, "ip": ip})
+
+    return swarm_agents

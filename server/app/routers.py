@@ -66,6 +66,10 @@ async def pheromone_pointing_to_neighbor(
         }}
     }}"""
 
+    logger.info(
+        f"Finding pheromones pointing from \"{pod_name}\" to \"{body['neighbor']}\"."
+    )
+
     try:
         return local_query(pheromone_query)
     except Exception as e:

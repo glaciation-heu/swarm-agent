@@ -9,7 +9,7 @@ info:
   license:
     name: MIT License
     url: https://github.com/glaciation-heu/swarm-agent/blob/main/LICENSE
-  version: 0.6.1
+  version: 0.6.2
 paths:
   /api/v0/create_agent:
     post:
@@ -34,6 +34,32 @@ paths:
               schema:
                 type: string
                 title: Response Receive Message Api V0 Create Agent Post
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v0/pheromone:
+    post:
+      summary: Pheromone Pointing To Neighbor
+      operationId: pheromone_pointing_to_neighbor_api_v0_pheromone_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              title: Body
+              description: 'The neighbor where the pheromone points needsto be specified
+                in the following way:{"neighbor": <neighbor-name>}'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
         '422':
           description: Validation Error
           content:

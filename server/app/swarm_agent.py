@@ -7,12 +7,16 @@ from datetime import datetime, timezone
 from os import getenv, path
 from time import time
 
-import requests
 from loguru import logger
 from rdflib.plugins.sparql.parser import parseQuery
 
 from app.schemas import EMPTY_SEARCH_RESPONSE, Message, SearchResponse
-from app.utils import local_query, metadata_service_url
+from app.utils import (
+    get_swarm_agent_neighbors,
+    local_query,
+    metadata_service_url,
+    send_message,
+)
 
 PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-5"))
 PARAMETER_ENV_VARIABLES = {"PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"}}
@@ -53,8 +57,9 @@ class SwarmAgent:
             if message.unique_id == ""
             else message.unique_id
         )
+        # TODO make time_to_live real time
         self.time_to_live = message.time_to_live  # self.parameters["ttl"]
-        self.neighbors = self.get_swarm_agent_neighbors()
+        self.neighbors = get_swarm_agent_neighbors(self.this_node, self.this_node_ip)
         self.pheromone_table: Dict[str, Any] = {}
 
     def load_parameters(self, file_path: str) -> Any:
@@ -128,27 +133,6 @@ class SwarmAgent:
 
         return ",".join(keywords) if keywords else "all"
 
-    def get_swarm_agent_neighbors(self):
-        """
-        The function retrieves the neighbors of a swarm agent from a graph database.
-        :return: A list of dictionaries containing the name and IP address of
-        neighboring swarm agents.
-        """
-        query = f"""SELECT ?neighbor WHERE {{
-            GRAPH <swarm-agent:neighbors> {{
-                <{self.this_node}:{self.this_node_ip}> <swarm:isNeighborOf> ?neighbor
-            }}
-        }}"""
-
-        results = local_query(query)
-
-        swarm_agents = []
-        for result in results.results.bindings:
-            name, ip = result["neighbor"]["value"].split(":")
-            swarm_agents.append({"name": name, "ip": ip})
-
-        return swarm_agents
-
     def get_triples_from_query(self, sparql_query):
         parsed_query = parseQuery(sparql_query)
         triple_pattern = parsed_query[1]["where"]["part"][0]["triples"][0]
@@ -215,9 +199,7 @@ class SwarmAgent:
 
         params = {"query": pheromone_delete_query}
 
-        response = self.send_message(
-            params, metadata_service_url(), "api/v0/graph/update"
-        )
+        response = send_message(params, metadata_service_url(), "api/v0/graph/update")
 
         return response, pheromone_delete_query
 
@@ -233,9 +215,7 @@ class SwarmAgent:
 
         params = {"query": pheromone_insert_query}
 
-        response = self.send_message(
-            params, metadata_service_url(), "api/v0/graph/update"
-        )
+        response = send_message(params, metadata_service_url(), "api/v0/graph/update")
 
         return response, pheromone_insert_query
 
@@ -309,20 +289,6 @@ class SwarmAgent:
         )
         logger.debug("from create {message_type}", message_type=message.message_type)
         return message
-
-    def send_message(self, message, url, endpoint="api/v0/create_agent"):
-        headers = {"Content-Type": "application/json", "accept": "application/json"}
-        url = f"{url}/{endpoint}"
-
-        try:
-            response = requests.post(url, json=message, headers=headers)
-            if response.status_code != 200:
-                logger.error(f"Error: {response.status_code}, {response.text}")
-
-            return response
-        except Exception as e:
-            logger.error(str(e))
-            raise e
 
     def forward_ant_step(self):
         if len(self.visited_nodes) > 0:
@@ -429,7 +395,7 @@ class SwarmAgent:
                 )
                 forward_message.time_sent = time()
                 try:
-                    self.send_message(
+                    send_message(
                         forward_message.model_dump(),
                         f"http://{chosen_node['ip']}:80",
                     )
@@ -458,7 +424,7 @@ class SwarmAgent:
             backward_message = self.create_backward_message(results)
             backward_message.time_sent = time()
             logger.debug("Sending backward message...")
-            self.send_message(
+            send_message(
                 backward_message.model_dump(), f"http://{self.this_node_ip}:80"
             )
 
@@ -548,7 +514,7 @@ class SwarmAgent:
                 self.results, self.unique_id
             )
             backward_message.time_sent = time()
-            self.send_message(
+            send_message(
                 backward_message.model_dump(),
                 f"http://{self.visited_nodes[self.time_to_live-2]['ip']}:80",
             )
