@@ -6,22 +6,13 @@ import re
 from datetime import datetime, timezone
 from os import getenv, path
 from time import time
-from urllib.parse import urlencode
 
 import requests
 from loguru import logger
 from rdflib.plugins.sparql.parser import parseQuery
 
 from app.schemas import EMPTY_SEARCH_RESPONSE, Message, SearchResponse
-from app.utils import metadata_service_url
-
-# from app.schemas import (
-#     ResponseHead,
-#     ResponseResults,
-#     SearchResponse,
-#     SPARQLQuery,
-#     UpdateRequestBody,
-# )
+from app.utils import local_query, metadata_service_url
 
 PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-5"))
 PARAMETER_ENV_VARIABLES = {"PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"}}
@@ -149,7 +140,7 @@ class SwarmAgent:
             }}
         }}"""
 
-        results = self.local_query(query)
+        results = local_query(query)
 
         swarm_agents = []
         for result in results.results.bindings:
@@ -168,31 +159,6 @@ class SwarmAgent:
 
         return local_predicate, local_object
 
-    def local_query(self, query: str | None = None) -> SearchResponse:
-        """
-        Queries Local Metadata service
-        """
-        if query is None:
-            query = self.query
-
-        params = {"query": query}
-        encoded_query = urlencode(params)
-        base_url = f"{metadata_service_url()}/api/v0/graph"
-        full_url = f"{base_url}?{encoded_query}"
-
-        try:
-            response = requests.get(full_url)
-        except Exception as e:
-            logger.error(str(e))
-            raise e
-
-        if response.status_code == 200:
-            return SearchResponse.model_validate_json(response.text)
-        else:
-            logger.error(f"Error: {response.status_code}, {response.text}")
-
-        return EMPTY_SEARCH_RESPONSE
-
     def get_pheromone_table(self, this_node: str) -> dict[str, Any]:
         logger.debug("I am reading from pheromone table...")
         pheromone_query = f"""
@@ -206,7 +172,7 @@ class SwarmAgent:
             }}
         }}"""
 
-        results = self.local_query(pheromone_query)
+        results = local_query(pheromone_query)
         pheromone_table: dict[str, Any] = {}
 
         for result in results.results.bindings:
@@ -362,7 +328,7 @@ class SwarmAgent:
         if len(self.visited_nodes) > 0:
             self.link_costs[self.this_node] = self.latency
         self.visited_nodes.append({"name": self.this_node, "ip": self.this_node_ip})
-        results = self.local_query()
+        results = local_query(self.query)
         node_id = None
         for result in results.results.bindings:
             node_id = result["swarmNode"]["value"]

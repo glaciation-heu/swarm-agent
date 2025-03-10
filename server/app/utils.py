@@ -1,7 +1,10 @@
 from os import environ, getenv
 
+import requests
 from kubernetes import client, config
 from loguru import logger
+
+from app.schemas import EMPTY_SEARCH_RESPONSE, SearchResponse
 
 METADATA_SERVICE_IP = getenv("METADATA_SERVICE_URL", "metadata-service")
 METADATA_SERVICE_PORT = getenv("METADATA_SERVICE_PORT", "80")
@@ -42,3 +45,24 @@ def metadata_service_url():
     logger.info(f"Using for Metadata Service: {url}")
 
     return url
+
+
+def local_query(query: str) -> SearchResponse:
+    """
+    Queries Local Metadata service
+    """
+    params = {"query": query}
+    base_url = f"{metadata_service_url()}/api/v0/graph"
+
+    try:
+        response = requests.get(base_url, params=params)
+    except Exception as e:
+        logger.error(str(e))
+        raise e
+
+    if response.status_code == 200:
+        return SearchResponse.model_validate_json(response.text)
+    else:
+        logger.error(f"Error: {response.status_code}, {response.text}")
+
+    return EMPTY_SEARCH_RESPONSE

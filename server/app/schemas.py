@@ -1,6 +1,6 @@
 from typing import Annotated, Any, Dict, List, Literal
 
-from fastapi import Body, Query
+from fastapi import Body
 from pydantic import BaseModel
 
 
@@ -36,22 +36,13 @@ class Message(BaseModel):
     time_received: float = 0.0
 
 
-UpdateRequestBody = Annotated[
+PheromoneRequestBody = Annotated[
     dict[str, Any],
     Body(
         description=(
-            "Request body must be in JSON-LD format. "
-            "It must be compatible with GLACIATION metadata upper ontology."
-        ),
-    ),
-]
-
-SPARQLQuery = Annotated[
-    str,
-    Query(
-        description=(
-            "SELECT query in SPARQL language. "
-            "It must be compatible with GLACIATION metadata upper ontology."
-        ),
+            "The neighbor where the pheromone points needs"
+            "to be specified in the following way:"
+            '{"neighbor": <neighbor-name>}'
+        )
     ),
 ]

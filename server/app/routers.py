@@ -1,23 +1,16 @@
-# from json import dumps
+from os import getenv
 from queue import Queue
 from threading import Thread
 from time import time
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from loguru import logger
 from starlette.responses import RedirectResponse
-from starlette.status import HTTP_303_SEE_OTHER
+from starlette.status import HTTP_303_SEE_OTHER, HTTP_500_INTERNAL_SERVER_ERROR
 
-from app.schemas import Message
+from app.schemas import Message, PheromoneRequestBody, SearchResponse
 from app.swarm_agent import SwarmAgent
-
-# from app.schemas import (
-#     ResponseHead,
-#     ResponseResults,
-#     SearchResponse,
-#     SPARQLQuery,
-#     UpdateRequestBody,
-# )
+from app.utils import local_query
 
 router = APIRouter()
 queue: Queue[Message] = Queue()
@@ -53,6 +46,34 @@ async def receive_message(
     queue.put(message)
 
     return "Success"  # response['results']['bindings'] #swarm_agent.keyword
+
+
+@router.post(
+    "/api/v0/pheromone",
+)
+async def pheromone_pointing_to_neighbor(
+    body: PheromoneRequestBody,
+) -> SearchResponse:
+    pod_name = getenv("MY_POD_NAME", "swarm-agent")
+    pheromone_query = f"""
+    SELECT ?keyword ?pheromone_value
+    WHERE {{
+        GRAPH <swarm-agent:pheromones> {{
+            <swarm:{pod_name}> <swarm:hasAssociation> ?assoc .
+            ?assoc <swarm:hasKeyword> ?keyword ;
+                    <swarm:hasNeighbor> <{body['neighbor']}> ;
+                    <swarm:hasPheromoneValue> ?pheromone_value .
+        }}
+    }}"""
+
+    try:
+        return local_query(pheromone_query)
+    except Exception as e:
+        logger.exception("An error occured")
+        raise HTTPException(
+            HTTP_500_INTERNAL_SERVER_ERROR,
+            str(e),
+        )
 
 
 def swarm_agent_control():
