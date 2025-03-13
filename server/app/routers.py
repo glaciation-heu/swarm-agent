@@ -6,7 +6,11 @@ from time import time
 from fastapi import APIRouter, HTTPException
 from loguru import logger
 from starlette.responses import RedirectResponse
-from starlette.status import HTTP_303_SEE_OTHER, HTTP_500_INTERNAL_SERVER_ERROR
+from starlette.status import (
+    HTTP_303_SEE_OTHER,
+    HTTP_400_BAD_REQUEST,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 
 from app.schemas import Message, PheromoneRequestBody, SearchResponse
 from app.swarm_agent import SwarmAgent
@@ -45,7 +49,7 @@ async def receive_message(
 
     queue.put(message)
 
-    return "Success"  # response['results']['bindings'] #swarm_agent.keyword
+    return f"Success - processed by pod '{getenv('MY_POD_NAME', 'swarm-agent')}'"
 
 
 @router.post(
@@ -54,6 +58,14 @@ async def receive_message(
 async def pheromone_pointing_to_neighbor(
     body: PheromoneRequestBody,
 ) -> SearchResponse:
+    if "neighbor" not in body:
+        msg = (
+            "The structure of the request body should be: "
+            '{"neighbor": <neighbor-pod-name>}'
+        )
+        logger.error(msg)
+        raise HTTPException(HTTP_400_BAD_REQUEST, msg)
+
     pod_name = getenv("MY_POD_NAME", "swarm-agent")
     pheromone_query = f"""
     SELECT ?keyword ?pheromone_value
