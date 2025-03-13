@@ -10,6 +10,12 @@ from time import time
 from loguru import logger
 from rdflib.plugins.sparql.parser import parseQuery
 
+from app.consts import (
+    MY_POD_IP,
+    MY_POD_NAME,
+    PARAMETER_ENV_VARIABLES,
+    PHEROMONE_THRESHOLD,
+)
 from app.schemas import EMPTY_SEARCH_RESPONSE, Message, SearchResponse
 from app.utils import (
     get_swarm_agent_neighbors,
@@ -17,9 +23,6 @@ from app.utils import (
     metadata_service_url,
     send_message,
 )
-
-PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-5"))
-PARAMETER_ENV_VARIABLES = {"PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"}}
 
 
 class SwarmAgent:
@@ -39,8 +42,8 @@ class SwarmAgent:
         """
         self.type = message.message_type
         self.latency = message.time_received - message.time_sent
-        self.this_node = getenv("MY_POD_NAME", "swarm-agent")
-        self.this_node_ip = getenv("MY_POD_IP", "localhost")
+        self.this_node = MY_POD_NAME
+        self.this_node_ip = MY_POD_IP
         self.query = message.sparql_query
         self.results = message.results
         self.parameters = self.load_parameters(parameters_file)

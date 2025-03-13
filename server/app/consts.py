@@ -14,3 +14,6 @@ QUERY_NEIGHBORS = """SELECT DISTINCT ?pod WHERE {
         ?pod <swarm:isNeighborOf> ?neighbor
     }
 }"""
+
+PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-5"))
+PARAMETER_ENV_VARIABLES = {"PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"}}
