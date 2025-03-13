@@ -1,15 +1,16 @@
-from os import environ, getenv
+from os import environ
 
 import requests
 from kubernetes import client, config
 from loguru import logger
 
+from app.consts import (
+    METADATA_SERVICE_IP,
+    METADATA_SERVICE_PORT,
+    MY_NODE_NAME,
+    MY_POD_NAMESPACE,
+)
 from app.schemas import EMPTY_SEARCH_RESPONSE, SearchResponse
-
-METADATA_SERVICE_IP = getenv("METADATA_SERVICE_URL", "metadata-service")
-METADATA_SERVICE_PORT = getenv("METADATA_SERVICE_PORT", "80")
-MY_NODE_NAME = getenv("MY_NODE_NAME")
-MY_POD_NAMESPACE = getenv("MY_POD_NAMESPACE", "default")
 
 
 def find_metadata_service_ip():

@@ -1,4 +1,3 @@
-from os import getenv
 from queue import Queue
 from threading import Thread
 from time import time
@@ -12,6 +11,7 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
+from app.consts import MY_POD_NAME
 from app.schemas import Message, PheromoneRequestBody, SearchResponse
 from app.swarm_agent import SwarmAgent
 from app.utils import local_query
@@ -49,7 +49,7 @@ async def receive_message(
 
     queue.put(message)
 
-    return f"Success - processed by pod '{getenv('MY_POD_NAME', 'swarm-agent')}'"
+    return f"Success - processed by pod '{MY_POD_NAME}'"
 
 
 @router.post(
@@ -66,7 +66,7 @@ async def pheromone_pointing_to_neighbor(
         logger.error(msg)
         raise HTTPException(HTTP_400_BAD_REQUEST, msg)
 
-    pod_name = getenv("MY_POD_NAME", "swarm-agent")
+    pod_name = MY_POD_NAME
     pheromone_query = f"""
     SELECT ?keyword ?pheromone_value
     WHERE {{

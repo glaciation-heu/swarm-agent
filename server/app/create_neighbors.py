@@ -1,29 +1,21 @@
 from typing import Literal
 
 import json
-from os import environ, getenv
+from os import environ
 
 import requests
 from kubernetes import client, config
 from loguru import logger
 
+from app.consts import MY_POD_NAMESPACE, QUERY_NEIGHBORS
 from app.schemas import SearchResponse
-
-METADATA_SERVICE_URL = (
-    f"http://{getenv('METADATA_SERVICE_URL', 'metadata-service')}:"
-    f"{getenv('METADATA_SERVICE_PORT', '80')}"
-)
-QUERY_NEIGHBORS = """SELECT DISTINCT ?pod WHERE {
-    GRAPH <swarm-agent:neighbors> {
-        ?pod <swarm:isNeighborOf> ?neighbor
-    }
-}"""
+from app.utils import metadata_service_url
 
 
 def send_request(
     data: dict[str, str], method: Literal["get", "post"], endpoint: str
 ) -> requests.Response | None:
-    url = f"{METADATA_SERVICE_URL}/{endpoint}"
+    url = f"{metadata_service_url()}/{endpoint}"
 
     response = None
 
@@ -96,9 +88,7 @@ def create_neighbors():
 
     # List swarm agent pods in their namespace
     label_selector = "app.kubernetes.io/name=swarm-agent"
-    pods = v1.list_namespaced_pod(
-        getenv("MY_POD_NAMESPACE", "default"), label_selector=label_selector
-    )
+    pods = v1.list_namespaced_pod(MY_POD_NAMESPACE, label_selector=label_selector)
 
     swarm_pods = [f"{pod.metadata.name}:{pod.status.pod_ip}" for pod in pods.items]
 

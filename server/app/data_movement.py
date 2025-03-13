@@ -1,16 +1,15 @@
 # TODO develop data movement recommendation here
-from os import getenv
-
 from loguru import logger
 
+from app.consts import MY_POD_IP, MY_POD_NAME
 from app.schemas import SearchResponse
 from app.utils import get_swarm_agent_neighbors, send_message
 
 
 class DataMovementAgent:
     def __init__(self):
-        self.this_node = getenv("MY_POD_NAME", "swarm-agent")
-        self.this_node_ip = getenv("MY_POD_IP", "localhost")
+        self.this_node = MY_POD_NAME
+        self.this_node_ip = MY_POD_IP
 
         self.neighbors = get_swarm_agent_neighbors(self.this_node, self.this_node_ip)
 
