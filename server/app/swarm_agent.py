@@ -179,14 +179,17 @@ class SwarmAgent:
                         result["pheromone_value"]["value"]
                     )
                 }
-            result = set(neighbors_from_ph_table) == set(self.neighbors)
-            if result:
+
+            neighbor_ids = [name["name"] for name in self.neighbors]
+            the_same = set(neighbors_from_ph_table) == set(neighbor_ids)
+            if the_same:
                 logger.debug("all neighbors are in ph table")
             else:
                 logger.debug("some neighbors got lost")
                 logger.debug("Neighbor list {nbrs}", nbrs=self.neighbors)
-                logger.debug("Neighbor list from ph table {nbrs}", nbrs=neighbors_from_ph_table)
-
+                logger.debug(
+                    "Neighbor list from ph table {nbrs}", nbrs=neighbors_from_ph_table
+                )
 
         return pheromone_table
 
@@ -322,7 +325,7 @@ class SwarmAgent:
         self.pheromone_table = self.get_pheromone_table(self.this_node)
         if self.keyword in self.pheromone_table:
             logger.debug(
-                "pheromone_table[{keyword}] contains {content}".format(),
+                "pheromone_table[{keyword}] contains {content}",
                 keyword=self.keyword,
                 content=self.pheromone_table[self.keyword],
             )
