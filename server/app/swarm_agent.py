@@ -161,13 +161,14 @@ class SwarmAgent:
 
         results = local_query(pheromone_query)
         pheromone_table: dict[str, Any] = {}
-
+        neighbors_from_ph_table = []
         for result in results.results.bindings:
             logger.debug(
                 "I have found keyword {keyword} for neighbor {nbr}",
                 keyword=result["keyword"]["value"],
                 nbr=result["neighbor_id"]["value"],
             )
+            neighbors_from_ph_table.append(result["neighbor_id"]["value"])
             try:
                 pheromone_table[result["keyword"]["value"]][
                     result["neighbor_id"]["value"]
@@ -178,6 +179,14 @@ class SwarmAgent:
                         result["pheromone_value"]["value"]
                     )
                 }
+            result = set(neighbors_from_ph_table) == set(self.neighbors)
+            if result:
+                logger.debug("all neighbors are in ph table")
+            else:
+                logger.debug("some neighbors got lost")
+                logger.debug("Neighbor list {nbrs}", nbrs=self.neighbors)
+                logger.debug("Neighbor list from ph table {nbrs}", nbrs=neighbors_from_ph_table)
+
 
         return pheromone_table
 
@@ -313,8 +322,9 @@ class SwarmAgent:
         self.pheromone_table = self.get_pheromone_table(self.this_node)
         if self.keyword in self.pheromone_table:
             logger.debug(
-                "pheromone_table[{keyword}]".format(keyword=self.keyword),
-                self.pheromone_table[self.keyword],
+                "pheromone_table[{keyword}] contains {content}".format(),
+                keyword=self.keyword,
+                content=self.pheromone_table[self.keyword],
             )
         else:
             self.pheromone_table[self.keyword] = {}

@@ -79,7 +79,7 @@ def send_message(message, url, endpoint="api/v0/create_agent"):
 
         return response
     except Exception as e:
-        logger.exception("An error occured")
+        logger.exception("An error occurred")
         raise e
 
 
