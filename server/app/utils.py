@@ -1,8 +1,10 @@
+import time
 from os import environ
 
 import requests
 from kubernetes import client, config
 from loguru import logger
+from requests.exceptions import ConnectionError, Timeout
 
 from app.consts import (
     METADATA_SERVICE_IP,
@@ -48,6 +50,30 @@ def metadata_service_url():
     return url
 
 
+def make_request_with_retries(url, params, max_retries=5, backoff_factor=1):
+    """
+    Make a request with retries and exponential backoff.
+
+    :param url: The URL to make the request to.
+    :param max_retries: The maximum number of retry attempts.
+    :param backoff_factor: The factor by which the delay increases between retries.
+    :return: The response object if the request is successful.
+    :raises: requests.exceptions.RequestException if all retries fail.
+    """
+    attempt = 0
+    while attempt < max_retries:
+        try:
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            return response
+        except (ConnectionError, Timeout) as e:
+            attempt += 1
+            wait_time = backoff_factor * (2 ** (attempt - 1))
+            print(f"Attempt {attempt} failed: {e}. Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+    raise requests.exceptions.RequestException(f"All {max_retries} attempts failed.")
+
+
 def local_query(query: str) -> SearchResponse:
     """
     Queries Local Metadata service
@@ -56,8 +82,10 @@ def local_query(query: str) -> SearchResponse:
     base_url = f"{metadata_service_url()}/api/v0/graph"
 
     try:
-        response = requests.get(base_url, params=params)
-    except Exception as e:
+        # response = requests.get(base_url, params=params)
+        response = make_request_with_retries(base_url, params)
+    # except Exception as e:
+    except requests.exceptions.RequestException as e:
         logger.error(str(e))
         raise e
 
