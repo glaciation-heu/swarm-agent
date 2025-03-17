@@ -461,10 +461,14 @@ class SwarmAgent:
         goodness_values = []
 
         for neighbor in unvisited_neighbors:
-            goodness_values.append(
-                self.pheromone_table[self.keyword][neighbor["name"]]
-                * self.parameters["beta"]
-            )
+            if neighbor["name"] in self.pheromone_table[self.keyword]:
+                goodness_values.append(
+                    self.pheromone_table[self.keyword][neighbor["name"]]
+                    ** self.parameters["beta"]
+                )
+            else:
+                goodness_values.append(0.1 ** self.parameters["beta"])
+                logger.debug("Neighbor not found! Minimal value used!")
 
         return goodness_values
 
