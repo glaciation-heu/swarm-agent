@@ -468,7 +468,10 @@ class SwarmAgent:
                 )
             else:
                 goodness_values.append(0.1 ** self.parameters["beta"])
-                logger.debug("Neighbor not found! Minimal value used!")
+                logger.debug(
+                    "Neighbor {neighbor} not found! Minimal value ph=0.1 was used!",
+                    neighbor=neighbor,
+                )
 
         return goodness_values
 
