@@ -180,16 +180,16 @@ class SwarmAgent:
                     )
                 }
 
-            neighbor_ids = [name["name"] for name in self.neighbors]
-            the_same = set(neighbors_from_ph_table) == set(neighbor_ids)
-            if the_same:
-                logger.debug("all neighbors are in ph table")
-            else:
-                logger.debug("some neighbors got lost")
-                logger.debug("Neighbor list {nbrs}", nbrs=self.neighbors)
-                logger.debug(
-                    "Neighbor list from ph table {nbrs}", nbrs=neighbors_from_ph_table
-                )
+        neighbor_ids = [name["name"] for name in self.neighbors]
+        the_same = set(neighbors_from_ph_table) == set(neighbor_ids)
+        if the_same:
+            logger.debug("all neighbors are in ph table")
+        else:
+            logger.debug("some neighbors got lost")
+            logger.debug("Neighbor list {nbrs}", nbrs=self.neighbors)
+            logger.debug(
+                "Neighbor list from ph table {nbrs}", nbrs=neighbors_from_ph_table
+            )
 
         return pheromone_table
 
@@ -269,7 +269,7 @@ class SwarmAgent:
 
         for neighbor in self.pheromone_table[keyword]:
             goodness_values.append(
-                self.pheromone_table[keyword][neighbor] * self.parameters["beta"]
+                self.pheromone_table[keyword][neighbor] ** self.parameters["beta"]
             )
 
         return goodness_values
