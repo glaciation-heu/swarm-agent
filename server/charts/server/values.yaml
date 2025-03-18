@@ -27,12 +27,14 @@ service:
 resources: {}
 
 livenessProbe:
+  failureThreshold: 10
   httpGet:
     path: /
     port: http
   periodSeconds: 60
   timeoutSeconds: 40
 readinessProbe:
+  failureThreshold: 10
   httpGet:
     path: /
     port: http
