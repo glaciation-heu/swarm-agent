@@ -65,11 +65,17 @@ def make_request_with_retries(url, params, max_retries=5, backoff_factor=1):
         try:
             response = requests.get(url, params=params, timeout=10)
             response.raise_for_status()  # Raise an exception for HTTP errors
+            logger.info(f"Request to {url} succeeded on attempt {attempt + 1}")
             return response
         except (ConnectionError, Timeout) as e:
             attempt += 1
             wait_time = backoff_factor * (2 ** (attempt - 1))
-            print(f"Attempt {attempt} failed: {e}. Retrying in {wait_time} seconds...")
+            logger.debug(
+                "Attempt {attempt} failed: {e}. Retrying in {wait_time} seconds...",
+                attempt=attempt,
+                e=e,
+                wait_time=wait_time,
+            )
             time.sleep(wait_time)
     raise requests.exceptions.RequestException(f"All {max_retries} attempts failed.")
 
