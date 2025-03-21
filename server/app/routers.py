@@ -11,7 +11,7 @@ from starlette.status import (
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 
-from app.consts import MY_POD_NAME
+from app.consts import MY_NODE_NAME, MY_POD_NAME
 from app.schemas import Message, PheromoneRequestBody, SearchResponse
 from app.swarm_agent import SwarmAgent
 from app.utils import local_query
@@ -49,7 +49,7 @@ async def receive_message(
 
     queue.put(message)
 
-    return f"Success - processed by pod '{MY_POD_NAME}'"
+    return f"Success - processed by pod '{MY_POD_NAME}' on node '{MY_NODE_NAME}'."
 
 
 @router.post(
