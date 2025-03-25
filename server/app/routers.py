@@ -103,10 +103,10 @@ def swarm_agent_control():
 
             if is_backward_ant_done:
                 logger.info(
-                    "A Backward Ant carried back a response for "
-                    "query '{query}' with id '{id}'",
+                    "A Backward Ant with id '{id}' carried back "
+                    "a response for query '{query}'.",
+                    id=swarm_agent.unique_id,
                     query=swarm_agent.query,
-                    id=message.unique_id,
                 )
                 logger.info(f"Results:\n{results.model_dump_json(indent=2)}")
         except Exception:
