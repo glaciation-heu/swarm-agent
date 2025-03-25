@@ -55,11 +55,11 @@ class SwarmAgent:
         self.visited_nodes = message.visited_nodes
         self.link_costs = message.link_costs
         now_utc = datetime.now(timezone.utc)
-        self.unique_id = (
-            now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
-            if message.unique_id == ""
-            else message.unique_id
-        )
+        if message.unique_id == "":
+            self.unique_id = now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
+            logger.debug(f"New agent: {self.type} ant initialized with id '{self.unique_id}'.")
+        else:
+            self.unique_id = message.unique_id
         # TODO make time_to_live real time
         self.time_to_live = message.time_to_live  # self.parameters["ttl"]
         self.neighbors = get_swarm_agent_neighbors(self.this_node, self.this_node_ip)
@@ -437,7 +437,7 @@ class SwarmAgent:
 
         if len(results.results.bindings) > 0:
             logger.debug("I am creating a backward ant...")
-            backward_message = self.create_backward_message(results)
+            backward_message = self.create_backward_message(results, self.unique_id)
             backward_message.time_sent = time()
             logger.debug("Sending backward message...")
             send_message(
