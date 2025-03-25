@@ -103,7 +103,8 @@ def swarm_agent_control():
 
             if is_backward_ant_done:
                 logger.info(
-                    "A Backward Ant carried back a response for query '{query}' with id '{id}'",
+                    "A Backward Ant carried back a response for "
+                    "query '{query}' with id '{id}'",
                     query=swarm_agent.query,
                     id=message.unique_id,
                 )
