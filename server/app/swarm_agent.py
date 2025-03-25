@@ -57,7 +57,9 @@ class SwarmAgent:
         now_utc = datetime.now(timezone.utc)
         if message.unique_id == "":
             self.unique_id = now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
-            logger.debug(f"New agent: {self.type} ant initialized with id '{self.unique_id}'.")
+            logger.debug(
+                f"New agent: {self.type} ant initialized with id '{self.unique_id}'."
+            )
         else:
             self.unique_id = message.unique_id
         # TODO make time_to_live real time
