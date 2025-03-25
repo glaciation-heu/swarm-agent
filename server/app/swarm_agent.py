@@ -277,16 +277,18 @@ class SwarmAgent:
         return goodness_values
 
     def create_backward_message(
-        self, results: SearchResponse, unique_id: str = ""
+        self,
+        results: SearchResponse,
+        time_to_live: int | None = None,
     ) -> Message:
         message = Message(
             message_type="backward",
-            unique_id=unique_id,
+            unique_id=self.unique_id,
             sparql_query=self.query,
             visited_nodes=self.visited_nodes,
             link_costs=self.link_costs,
             time_to_live=(
-                len(self.visited_nodes) if unique_id == "" else self.time_to_live - 1
+                self.time_to_live - 1 if time_to_live is None else time_to_live
             ),
             keyword=self.keyword,
             results=results,
@@ -439,7 +441,9 @@ class SwarmAgent:
 
         if len(results.results.bindings) > 0:
             logger.debug("I am creating a backward ant...")
-            backward_message = self.create_backward_message(results, self.unique_id)
+            backward_message = self.create_backward_message(
+                results, len(self.visited_nodes)
+            )
             backward_message.time_sent = time()
             logger.debug("Sending backward message...")
             send_message(
@@ -535,9 +539,7 @@ class SwarmAgent:
             )
 
         if self.time_to_live > 1:
-            backward_message = self.create_backward_message(
-                self.results, self.unique_id
-            )
+            backward_message = self.create_backward_message(self.results)
             backward_message.time_sent = time()
             send_message(
                 backward_message.model_dump(),
