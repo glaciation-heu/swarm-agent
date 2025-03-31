@@ -1,3 +1,5 @@
+from typing import Any
+
 import time
 from os import environ
 
@@ -137,3 +139,51 @@ def get_swarm_agent_neighbors(this_node, this_node_ip):
         swarm_agents.append({"name": name, "ip": ip})
 
     return swarm_agents
+
+
+def get_pheromone_table(
+    this_node: str, neighbors: list[dict[str, Any]]
+) -> dict[str, Any]:
+    logger.debug("I am reading from pheromone table...")
+    pheromone_query = f"""
+    SELECT ?keyword ?neighbor_id ?pheromone_value
+    WHERE {{
+        GRAPH <swarm-agent:pheromones> {{
+            <swarm:{this_node}> <swarm:hasAssociation> ?assoc .
+            ?assoc <swarm:hasKeyword> ?keyword ;
+                    <swarm:hasNeighbor> ?neighbor_id ;
+                    <swarm:hasPheromoneValue> ?pheromone_value .
+        }}
+    }}"""
+
+    results = local_query(pheromone_query)
+    pheromone_table: dict[str, Any] = {}
+    neighbors_from_ph_table = []
+    for result in results.results.bindings:
+        logger.debug(
+            "I have found keyword {keyword} for neighbor {nbr}",
+            keyword=result["keyword"]["value"],
+            nbr=result["neighbor_id"]["value"],
+        )
+        neighbors_from_ph_table.append(result["neighbor_id"]["value"])
+        try:
+            pheromone_table[result["keyword"]["value"]][
+                result["neighbor_id"]["value"]
+            ] = float(result["pheromone_value"]["value"])
+        except KeyError:
+            pheromone_table[result["keyword"]["value"]] = {
+                result["neighbor_id"]["value"]: float(
+                    result["pheromone_value"]["value"]
+                )
+            }
+
+    neighbor_ids = [name["name"] for name in neighbors]
+    the_same = set(neighbors_from_ph_table) == set(neighbor_ids)
+    if the_same:
+        logger.debug("all neighbors are in ph table")
+    else:
+        logger.debug("some neighbors got lost")
+        logger.debug("Neighbor list {nbrs}", nbrs=neighbors)
+        logger.debug("Neighbor list from ph table {nbrs}", nbrs=neighbors_from_ph_table)
+
+    return pheromone_table

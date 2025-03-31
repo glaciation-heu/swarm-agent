@@ -1,9 +1,11 @@
-# TODO develop data movement recommendation here
+from typing import Any
+
+import numpy as np
 from loguru import logger
 
 from app.consts import MY_POD_IP, MY_POD_NAME
 from app.schemas import SearchResponse
-from app.utils import get_swarm_agent_neighbors, send_message
+from app.utils import get_pheromone_table, get_swarm_agent_neighbors, send_message
 
 
 class DataMovementAgent:
@@ -13,8 +15,10 @@ class DataMovementAgent:
 
         self.neighbors = get_swarm_agent_neighbors(self.this_node, self.this_node_ip)
 
-    def check_pheromone_strengths(self):
+    def get_neighbor_pheromones(self):
         message = {"neighbor": self.this_node}
+
+        self.neighbor_pheromones: dict[str, list[Any]] = {}
 
         for neighbor in self.neighbors:
             response = send_message(
@@ -35,3 +39,65 @@ class DataMovementAgent:
                         f"{results.model_dump_json(indent=2)}"
                     )
                 )
+
+                for result in results.results.bindings:
+                    keyword = result["keyword"]["value"]
+                    ph_value = float(result["pheromone_value"]["value"])
+                    try:
+                        self.neighbor_pheromones[keyword].append(
+                            {"neighbor": neighbor, "pheromone_value": ph_value}
+                        )
+                    except KeyError:
+                        self.neighbor_pheromones[keyword] = [
+                            {"neighbor": neighbor, "pheromone_value": ph_value}
+                        ]
+
+    def reshape_pheromone_tables(self, pheromones, neighbor_pheromones):
+        neighbor_dict = {}
+        my_pheromone_values = np.empty(len(self.neighbors))
+        neighbor_pheromone_values = np.zeros(len(self.neighbors))
+
+        for i, neighbor in enumerate(self.neighbors):
+            neighbor_dict[neighbor["name"]] = i
+            try:
+                my_pheromone_values[i] = pheromones[neighbor["name"]]
+            except KeyError:
+                my_pheromone_values[i] = 0
+
+        for entry in neighbor_pheromones:
+            neighbor_pheromone_values[neighbor_dict[entry["neighbor"]["name"]]] = entry[
+                "pheromone_value"
+            ]
+
+        return my_pheromone_values, neighbor_pheromone_values
+
+    def check_pheromone_strengths(self):
+        self.pheromone_table = get_pheromone_table(self.this_node, self.neighbors)
+        self.get_neighbor_pheromones()
+
+        for keyword in self.neighbor_pheromones:
+            my_pheromones, neighbor_pheromones = self.reshape_pheromone_tables(
+                self.pheromone_table[keyword], self.neighbor_pheromones[keyword]
+            )
+
+            mean_neighbor_pheromones = neighbor_pheromones.mean()
+
+            if mean_neighbor_pheromones > 0:
+                fulfills_condition = np.where(
+                    2.0 * neighbor_pheromones - my_pheromones
+                    >= (1.0 + neighbor_pheromones.size) * mean_neighbor_pheromones
+                )[0]
+
+                if fulfills_condition.size == 0:
+                    logger.info("None of the nodes fulfill data movement condition.")
+                elif fulfills_condition.size > 1:
+                    logger.info(
+                        "Multiple nodes fulfill data movement condition. "
+                        "Not moving the data."
+                    )
+                else:
+                    moving_to = self.neighbors[fulfills_condition[0]]
+                    logger.info(
+                        f"Moving data from '{self.this_node}' to "
+                        f"'{moving_to['name']}'. (keyword: '{keyword}')"
+                    )

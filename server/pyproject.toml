@@ -27,6 +27,7 @@ email-validator = "^2.2.0"
 kubernetes = "^31.0.0"
 loguru = "^0.7.3"
 schedule = "^1.2.2"
+numpy = "^2.2.4"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.12"

@@ -18,6 +18,7 @@ from app.consts import (
 )
 from app.schemas import EMPTY_SEARCH_RESPONSE, Message, SearchResponse
 from app.utils import (
+    get_pheromone_table,
     get_swarm_agent_neighbors,
     local_query,
     metadata_service_url,
@@ -147,53 +148,6 @@ class SwarmAgent:
         local_object = str(triple_pattern[2]["string"])
 
         return local_predicate, local_object
-
-    def get_pheromone_table(self, this_node: str) -> dict[str, Any]:
-        logger.debug("I am reading from pheromone table...")
-        pheromone_query = f"""
-        SELECT ?keyword ?neighbor_id ?pheromone_value
-        WHERE {{
-            GRAPH <swarm-agent:pheromones> {{
-                <swarm:{this_node}> <swarm:hasAssociation> ?assoc .
-                ?assoc <swarm:hasKeyword> ?keyword ;
-                        <swarm:hasNeighbor> ?neighbor_id ;
-                        <swarm:hasPheromoneValue> ?pheromone_value .
-            }}
-        }}"""
-
-        results = local_query(pheromone_query)
-        pheromone_table: dict[str, Any] = {}
-        neighbors_from_ph_table = []
-        for result in results.results.bindings:
-            logger.debug(
-                "I have found keyword {keyword} for neighbor {nbr}",
-                keyword=result["keyword"]["value"],
-                nbr=result["neighbor_id"]["value"],
-            )
-            neighbors_from_ph_table.append(result["neighbor_id"]["value"])
-            try:
-                pheromone_table[result["keyword"]["value"]][
-                    result["neighbor_id"]["value"]
-                ] = float(result["pheromone_value"]["value"])
-            except KeyError:
-                pheromone_table[result["keyword"]["value"]] = {
-                    result["neighbor_id"]["value"]: float(
-                        result["pheromone_value"]["value"]
-                    )
-                }
-
-        neighbor_ids = [name["name"] for name in self.neighbors]
-        the_same = set(neighbors_from_ph_table) == set(neighbor_ids)
-        if the_same:
-            logger.debug("all neighbors are in ph table")
-        else:
-            logger.debug("some neighbors got lost")
-            logger.debug("Neighbor list {nbrs}", nbrs=self.neighbors)
-            logger.debug(
-                "Neighbor list from ph table {nbrs}", nbrs=neighbors_from_ph_table
-            )
-
-        return pheromone_table
 
     def delete_pheromone_entry(self, local_node_id, keyword, neighbor_id):
         pheromone_delete_query = f"""
@@ -326,7 +280,7 @@ class SwarmAgent:
         if node_id != self.this_node:
             results = EMPTY_SEARCH_RESPONSE
 
-        self.pheromone_table = self.get_pheromone_table(self.this_node)
+        self.pheromone_table = get_pheromone_table(self.this_node, self.neighbors)
         if self.keyword in self.pheromone_table:
             logger.debug(
                 "pheromone_table[{keyword}] contains {content}",
@@ -515,7 +469,7 @@ class SwarmAgent:
         r_max = 10
 
         if len(self.link_costs) > 0 and self.time_to_live < len(self.visited_nodes):
-            self.pheromone_table = self.get_pheromone_table(self.this_node)
+            self.pheromone_table = get_pheromone_table(self.this_node, self.neighbors)
 
             total_link_costs = sum(self.link_costs.values())
             z = w_d * len(self.results.results.bindings) / r_max + (
@@ -559,7 +513,7 @@ class SwarmAgent:
         return self.backward_ant_step()
 
     def pheromone_evaporation(self):
-        pheromone_table = self.get_pheromone_table(self.this_node)
+        pheromone_table = get_pheromone_table(self.this_node, self.neighbors)
 
         logger.debug("I will evaporate pheromones!")
         logger.debug("The keywords are {}", list(pheromone_table.keys()))
