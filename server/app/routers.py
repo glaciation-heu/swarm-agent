@@ -73,7 +73,7 @@ async def pheromone_pointing_to_neighbor(
         GRAPH <swarm-agent:pheromones> {{
             <swarm:{pod_name}> <swarm:hasAssociation> ?assoc .
             ?assoc <swarm:hasKeyword> ?keyword ;
-                    <swarm:hasNeighbor> <{body['neighbor']}> ;
+                    <swarm:hasNeighbor> "{body['neighbor']}" ;
                     <swarm:hasPheromoneValue> ?pheromone_value .
         }}
     }}"""
