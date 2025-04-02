@@ -76,28 +76,35 @@ class DataMovementAgent:
         self.get_neighbor_pheromones()
 
         for keyword in self.neighbor_pheromones:
+            logger.info(
+                "Checking pheromone pull for keyword "
+                f"'{keyword}' on node '{self.this_node}'."
+            )
             my_pheromones, neighbor_pheromones = self.reshape_pheromone_tables(
                 self.pheromone_table[keyword], self.neighbor_pheromones[keyword]
             )
 
             mean_neighbor_pheromones = neighbor_pheromones.mean()
 
+            no_data_movement = True
             if mean_neighbor_pheromones > 0:
                 fulfills_condition = np.where(
                     2.0 * neighbor_pheromones - my_pheromones
                     >= (1.0 + neighbor_pheromones.size) * mean_neighbor_pheromones
                 )[0]
 
-                if fulfills_condition.size == 0:
-                    logger.info("None of the nodes fulfill data movement condition.")
-                elif fulfills_condition.size > 1:
-                    logger.info(
-                        "Multiple nodes fulfill data movement condition. "
-                        "Not moving the data."
-                    )
-                else:
+                if fulfills_condition.size == 1:
+                    no_data_movement = False
                     moving_to = self.neighbors[fulfills_condition[0]]
                     logger.info(
                         f"Moving data from '{self.this_node}' to "
                         f"'{moving_to['name']}'. (keyword: '{keyword}')"
                     )
+                elif fulfills_condition.size > 1:
+                    logger.info(
+                        "Multiple nodes fulfill data movement condition. "
+                        "Not moving the data."
+                    )
+
+            if no_data_movement:
+                logger.info("None of the nodes fulfill data movement condition.")

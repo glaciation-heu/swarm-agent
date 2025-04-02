@@ -34,7 +34,7 @@ def move_data():
 # TODO data movement recommendation - regular pheromone map checks
 schedule.every(60).seconds.do(evap_pheromones)
 schedule.every(60).seconds.do(create_neighbors)
-schedule.every(600).seconds.do(move_data)
+schedule.every(300).seconds.do(move_data)
 
 if __name__ == "__main__":
     while True:
