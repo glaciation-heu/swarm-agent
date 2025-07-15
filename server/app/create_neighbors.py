@@ -89,7 +89,8 @@ def createHierarchicalNetwork(
     )  # The final index of each layer
 
     # Add first layer of nodes with full mesh connectivity
-    nodes_by_parent = dict()
+    nodes_by_parent: Dict[int, List[int]] = {}
+
     for i in range(int(N_layers[0])):
         nodes_by_parent[i] = []
         for j in range(i + 1, int(N_layers[0])):
@@ -98,7 +99,7 @@ def createHierarchicalNetwork(
     # Add intermediate layers of nodes connected to the mesh in a tree-like manner,
     # and create connections inside the layer with specified probability
     for layer in range(1, N_layers.shape[0] - 1):
-        nodes_by_parent_temp = dict()
+        nodes_by_parent_temp: Dict[int, List[int]] = {}
         for i in range(int(N_layers[layer - 1]), int(N_layers[layer])):
             parent_node = random.choice(list(nodes_by_parent.keys()))
             nodes_by_parent[parent_node].append(i)
