@@ -52,25 +52,30 @@ def new_pods_are_same(new_pods):
     return True
 
 
-def generate_neighborhood(swarm_pods):
+def generate_neighborhood(swarm_pods, kind="hub"):
     # Create a dictionary to store the neighbors
     neighbors_dict = {}
 
-    # Assuming the first pod is the hub
-    hub = swarm_pods[0]
+    if kind=="hub":
+        # Assuming the first pod is the hub
+        hub = swarm_pods[0]
 
-    # Organize the neighbors
-    for pod in swarm_pods:
-        if pod == hub:
-            # Hub is connected to all other nodes
-            neighbors_dict[pod] = [p for p in swarm_pods if p != hub]
-        else:
-            # Other nodes are connected only to the hub
-            neighbors_dict[pod] = [hub]
+        # Organize the neighbors
+        for pod in swarm_pods:
+            if pod == hub:
+                # Hub is connected to all other nodes
+                neighbors_dict[pod] = [p for p in swarm_pods if p != hub]
+            else:
+                # Other nodes are connected only to the hub
+                neighbors_dict[pod] = [hub]
 
-    # Convert the dictionary to a JSON string
-    neighbors_json = json.dumps(neighbors_dict, indent=2)
-    logger.info(f"Neighbors JSON:\n{neighbors_json}")
+        # Convert the dictionary to a JSON string
+        neighbors_json = json.dumps(neighbors_dict, indent=2)
+        logger.info(f"Neighbors JSON:\n{neighbors_json}")
+    elif kind=="hierarchical":
+        pass
+    else:
+        print("Network kind not recognized!")
 
     return neighbors_dict
 
