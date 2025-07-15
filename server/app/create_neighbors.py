@@ -150,11 +150,13 @@ def generate_neighborhood(swarm_pods, kind="hub"):
         neighbors_json = json.dumps(neighbors_dict, indent=2)
         logger.info(f"Neighbors JSON:\n{neighbors_json}")
     elif kind == "hierarchical":
-        G = createHierarchicalNetwork(len(swarm_pods), [.1, .4, .5], .3)
+        G = createHierarchicalNetwork(len(swarm_pods), [0.1, 0.4, 0.5], 0.3)
         mapping = {i: swarm_pods[i] for i in range(len(swarm_pods))}
         G = nx.relabel_nodes(G, mapping)
         neighbors_dict = {node: list(G.neighbors(node)) for node in G.nodes()}
-        logger.debug(f"Neighbors created for edge-fog-cloud! There are {len(swarm_pods)} nodes!")
+        logger.debug(
+            f"Neighbors created for edge-fog-cloud! There are {len(swarm_pods)} nodes!"
+        )
     else:
         print("Network kind not recognized!")
 
@@ -184,7 +186,7 @@ def create_neighbors():
 
     logger.info("Updating neighborhood...")
 
-    neighbors_dict = generate_neighborhood(swarm_pods)
+    neighbors_dict = generate_neighborhood(swarm_pods, kind="hierarchical")
 
     # Generate SPARQL queries
     triples = ""
