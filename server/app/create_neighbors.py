@@ -1,8 +1,11 @@
-from typing import Literal
+from typing import Dict, List, Literal
 
 import json
+import random
 from os import environ
 
+import networkx as nx
+import numpy as np
 import requests
 from kubernetes import client, config
 from loguru import logger
@@ -52,11 +55,85 @@ def new_pods_are_same(new_pods):
     return True
 
 
+def createHierarchicalNetwork(
+    N: int, layer_distribution: List[float], mesh_probability: float | Dict[int, float]
+) -> nx.Graph:
+    """
+    The function `createHierarchicalNetwork` creates a
+    hierarchical network with specified layer
+    distribution and mesh connectivity probabilities.
+
+    :param N: The total number of nodes in the hierarchical network
+    :type N: int
+    :param layer_distribution: The `layer_distribution` parameter is a list of floats
+    that represents
+    the distribution of nodes across the layers of the hierarchical network.
+    Each element in the list
+    represents the proportion of nodes in that layer compared to the total
+    number of nodes (N). The
+    length of the list determines the number of layers in the network
+    :type layer_distribution: List[float]
+    :param mesh_probability: The `mesh_probability` parameter determines
+    the probability of creating an
+    edge between two nodes within a layer, connected to the same parent.
+    It can be either a single float
+    value, which will be used for all layers, or a dictionary where the keys
+    represent the layer index
+    and the values represent the probability for that specific layer
+    :type mesh_probability: float | Dict[int, float]
+    :return: a networkx graph object.
+    """
+    G = nx.Graph()
+    N_layers = (
+        np.array(layer_distribution).cumsum() * N
+    )  # The final index of each layer
+
+    # Add first layer of nodes with full mesh connectivity
+    nodes_by_parent = dict()
+    for i in range(int(N_layers[0])):
+        nodes_by_parent[i] = []
+        for j in range(i + 1, int(N_layers[0])):
+            G.add_edge(i, j, weight=1)
+
+    # Add intermediate layers of nodes connected to the mesh in a tree-like manner,
+    # and create connections inside the layer with specified probability
+    for layer in range(1, N_layers.shape[0] - 1):
+        nodes_by_parent_temp = dict()
+        for i in range(int(N_layers[layer - 1]), int(N_layers[layer])):
+            parent_node = random.choice(list(nodes_by_parent.keys()))
+            nodes_by_parent[parent_node].append(i)
+            nodes_by_parent_temp[i] = []
+            G.add_edge(parent_node, i, weight=1)
+
+        for parent_node in nodes_by_parent:
+            for i in range(len(nodes_by_parent[parent_node])):
+                for j in range(i + 1, len(nodes_by_parent[parent_node])):
+                    if random.random() < (
+                        mesh_probability
+                        if type(mesh_probability) is float
+                        else mesh_probability[layer]
+                    ):
+                        G.add_edge(
+                            nodes_by_parent[parent_node][i],
+                            nodes_by_parent[parent_node][j],
+                            weight=1,
+                        )
+
+        nodes_by_parent = nodes_by_parent_temp.copy()
+
+    # Add last layer of nodes in a tree topology
+    for i in range(int(N_layers[-2]), N):
+        parent_node = random.choice(list(nodes_by_parent.keys()))
+        G.add_edge(parent_node, i, weight=1)
+
+    return G
+
+
 def generate_neighborhood(swarm_pods, kind="hub"):
     # Create a dictionary to store the neighbors
     neighbors_dict = {}
 
-    if kind=="hub":
+    if kind == "hub":
         # Assuming the first pod is the hub
         hub = swarm_pods[0]
 
@@ -72,7 +149,7 @@ def generate_neighborhood(swarm_pods, kind="hub"):
         # Convert the dictionary to a JSON string
         neighbors_json = json.dumps(neighbors_dict, indent=2)
         logger.info(f"Neighbors JSON:\n{neighbors_json}")
-    elif kind=="hierarchical":
+    elif kind == "hierarchical":
         pass
     else:
         print("Network kind not recognized!")
