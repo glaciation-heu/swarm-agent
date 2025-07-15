@@ -109,11 +109,12 @@ def createHierarchicalNetwork(
         for parent_node in nodes_by_parent:
             for i in range(len(nodes_by_parent[parent_node])):
                 for j in range(i + 1, len(nodes_by_parent[parent_node])):
-                    if random.random() < (
-                        mesh_probability
-                        if type(mesh_probability) is float
-                        else mesh_probability[layer]
-                    ):
+                    if isinstance(mesh_probability, float):
+                        prob = mesh_probability
+                    else:
+                        prob = mesh_probability[layer]
+
+                    if random.random() < prob:
                         G.add_edge(
                             nodes_by_parent[parent_node][i],
                             nodes_by_parent[parent_node][j],
