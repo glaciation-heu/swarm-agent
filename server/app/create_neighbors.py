@@ -10,7 +10,7 @@ import requests
 from kubernetes import client, config
 from loguru import logger
 
-from app.consts import MY_POD_NAMESPACE, QUERY_NEIGHBORS, MY_POD_NAME
+from app.consts import MY_POD_NAME, MY_POD_NAMESPACE, QUERY_NEIGHBORS
 from app.schemas import SearchResponse
 from app.utils import metadata_service_url
 
@@ -211,13 +211,17 @@ def create_neighbors():
 
         logger.info("Clearing named graph <swarm-agent:neighbors>.")
         response = send_request(
-            {"query": "CLEAR GRAPH <swarm-agent:neighbors>"}, "post", "api/v0/graph/update"
+            {"query": "CLEAR GRAPH <swarm-agent:neighbors>"},
+            "post",
+            "api/v0/graph/update",
         )
         logger.debug(f"Response: {response}")
 
         logger.info("Clearing named graph <swarm-agent:pheromones>.")
         response = send_request(
-            {"query": "CLEAR GRAPH <swarm-agent:pheromones>"}, "post", "api/v0/graph/update"
+            {"query": "CLEAR GRAPH <swarm-agent:pheromones>"},
+            "post",
+            "api/v0/graph/update",
         )
         logger.debug(f"Response: {response}")
 
