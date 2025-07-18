@@ -10,7 +10,7 @@ import requests
 from kubernetes import client, config
 from loguru import logger
 
-from app.consts import MY_POD_NAMESPACE, QUERY_NEIGHBORS
+from app.consts import MY_POD_NAMESPACE, QUERY_NEIGHBORS, MY_POD_NAME
 from app.schemas import SearchResponse
 from app.utils import metadata_service_url
 
@@ -186,40 +186,45 @@ def create_neighbors():
         logger.info("There is no need to update the neighborhood.")
         return
 
-    logger.info("Updating neighborhood...")
+    if MY_POD_NAME in swarm_pods[0]:
+        logger.debug(f"I am hub, {MY_POD_NAME}")
+        logger.info("Updating neighborhood...")
 
-    neighbors_dict = generate_neighborhood(swarm_pods, kind="hierarchical")
+        neighbors_dict = generate_neighborhood(swarm_pods, kind="hierarchical")
 
-    # Generate SPARQL queries
-    triples = ""
-    for node, neighbors in neighbors_dict.items():
-        for neighbor in neighbors:
-            triples += (
-                "\n\t\t" if len(triples) > 0 else ""
-            ) + f"<{node}> <swarm:isNeighborOf> <{neighbor}> ."
+        # Generate SPARQL queries
+        triples = ""
+        for node, neighbors in neighbors_dict.items():
+            for neighbor in neighbors:
+                triples += (
+                    "\n\t\t" if len(triples) > 0 else ""
+                ) + f"<{node}> <swarm:isNeighborOf> <{neighbor}> ."
 
-    triples += "\n\t\t" + f"<{swarm_pods[1]}> <swarm:hasKnowledgeOf> <swarm:Car1> ."
-    triples += "\n\t\t" + "<swarm:Car1> <swarm:hasColor> <swarm:Blue> ."
+        triples += "\n\t\t" + f"<{swarm_pods[1]}> <swarm:hasKnowledgeOf> <swarm:Car1> ."
+        triples += "\n\t\t" + "<swarm:Car1> <swarm:hasColor> <swarm:Blue> ."
 
-    query = f"""INSERT DATA {{
-\tGRAPH <swarm-agent:neighbors> {{
-\t\t{triples}
-\t}}
-}}"""
+        query = f"""INSERT DATA {{
+    \tGRAPH <swarm-agent:neighbors> {{
+    \t\t{triples}
+    \t}}
+    }}"""
 
-    logger.info("Clearing named graph <swarm-agent:neighbors>.")
-    response = send_request(
-        {"query": "CLEAR GRAPH <swarm-agent:neighbors>"}, "post", "api/v0/graph/update"
-    )
-    logger.debug(f"Response: {response}")
+        logger.info("Clearing named graph <swarm-agent:neighbors>.")
+        response = send_request(
+            {"query": "CLEAR GRAPH <swarm-agent:neighbors>"}, "post", "api/v0/graph/update"
+        )
+        logger.debug(f"Response: {response}")
 
-    logger.info("Clearing named graph <swarm-agent:pheromones>.")
-    response = send_request(
-        {"query": "CLEAR GRAPH <swarm-agent:pheromones>"}, "post", "api/v0/graph/update"
-    )
-    logger.debug(f"Response: {response}")
+        logger.info("Clearing named graph <swarm-agent:pheromones>.")
+        response = send_request(
+            {"query": "CLEAR GRAPH <swarm-agent:pheromones>"}, "post", "api/v0/graph/update"
+        )
+        logger.debug(f"Response: {response}")
 
-    logger.info("Sending new neighbor list.")
-    logger.debug(f"SPARQL Query:\n{query}")
-    response = send_request({"query": query}, "post", "api/v0/graph/update")
-    logger.debug(f"Response: {response}")
+        logger.info("Sending new neighbor list.")
+        logger.debug(f"SPARQL Query:\n{query}")
+        response = send_request({"query": query}, "post", "api/v0/graph/update")
+        logger.debug(f"Response: {response}")
+    else:
+        logger.debug("I'm not hub")
+        return
