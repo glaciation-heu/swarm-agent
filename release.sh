@@ -1,6 +1,15 @@
 #!/bin/bash
 
-set -e  # Exit immediately if a command exits with a non-zero status.
+set -euo pipefail  # Exit immediately if a command exits with a non-zero status.
+
+
+if [ -z "${1:-}" ]; then
+  echo "USAGE: $0 \"Your commit message\""
+  exit 1
+fi
+
+COMMIT_MSG="$1"
+
 
 # 1. Run formatting check with Poetry
 echo "Checking formatting requirements with Poetry..."
@@ -64,7 +73,7 @@ git add api/openapi.yaml
 
 # 4. Commit changes
 echo "Committing changes..."
-git commit -m "Release version $NEW_VERSION"
+git commit -m "$COMMIT_MSG"
 
 # 5. Tag the new version
 echo "Tagging the new version..."
