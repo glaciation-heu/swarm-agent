@@ -166,6 +166,18 @@ def generate_neighborhood(
     return neighbors_dict
 
 
+def choose_edge_node(
+    neighbors_dict: Dict[Any, List[Any]], swarm_pods: List[str]
+) -> Any:
+    edge_pods = []
+
+    for swarm_pod in swarm_pods:
+        if swarm_pod in neighbors_dict and len(neighbors_dict[swarm_pod]) == 1:
+            edge_pods.append(swarm_pod)
+
+    return random.choice(edge_pods)
+
+
 def create_neighbors():
     # Load kube config
     if "KUBERNETES_SERVICE_HOST" in environ:
@@ -206,7 +218,10 @@ def create_neighbors():
                     "\n\t\t" if len(triples) > 0 else ""
                 ) + f"<{node}> <swarm:isNeighborOf> <{neighbor}> ."
 
-        triples += "\n\t\t" + f"<{swarm_pods[1]}> <swarm:hasKnowledgeOf> <swarm:Car1> ."
+        triples += "\n\t\t" + (
+            f"<{choose_edge_node(neighbors_dict, swarm_pods)}>"
+            "<swarm:hasKnowledgeOf> <swarm:Car1> ."
+        )
         triples += "\n\t\t" + "<swarm:Car1> <swarm:hasColor> <swarm:Blue> ."
 
         query = f"""INSERT DATA {{
