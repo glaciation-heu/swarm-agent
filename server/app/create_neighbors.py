@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal
+from typing import Any, Dict, List, Literal
 
 import json
 import random
@@ -44,6 +44,7 @@ def new_pods_are_same(new_pods):
         old_pods = [result["pod"]["value"] for result in results.results.bindings]
     else:
         old_pods = []
+        return None
 
     if len(old_pods) != len(new_pods):
         return False
@@ -131,7 +132,9 @@ def createHierarchicalNetwork(
     return G
 
 
-def generate_neighborhood(swarm_pods, kind="hub"):
+def generate_neighborhood(
+    swarm_pods: List[Any], kind: Literal["hub", "hierarchical"] = "hub"
+) -> Dict[Any, List[Any]]:
     # Create a dictionary to store the neighbors
     neighbors_dict = {}
 
@@ -159,8 +162,8 @@ def generate_neighborhood(swarm_pods, kind="hub"):
         logger.debug(
             f"Neighbors created for edge-fog-cloud! There are {len(swarm_pods)} nodes!"
         )
-    else:
-        print("Network kind not recognized!")
+    # else:
+    #     logger.error("Network kind not recognized!")
 
     return neighbors_dict
 
@@ -182,7 +185,8 @@ def create_neighbors():
 
     swarm_pods = [f"{pod.metadata.name}:{pod.status.pod_ip}" for pod in pods.items]
 
-    if new_pods_are_same(swarm_pods):
+    same_new_pods = new_pods_are_same(swarm_pods)
+    if same_new_pods or same_new_pods is None:
         logger.info("There is no need to update the neighborhood.")
         return
 
@@ -216,6 +220,9 @@ def create_neighbors():
             "api/v0/graph/update",
         )
         logger.debug(f"Response: {response}")
+        if response is None or response.status_code != 200:
+            logger.error("Clearing named graph <swarm-agent:neighbors> - UNSUCCESSFUL.")
+            return
 
         logger.info("Clearing named graph <swarm-agent:pheromones>.")
         response = send_request(
@@ -224,11 +231,19 @@ def create_neighbors():
             "api/v0/graph/update",
         )
         logger.debug(f"Response: {response}")
+        if response is None or response.status_code != 200:
+            logger.error(
+                "Clearing named graph <swarm-agent:pheromones> - UNSUCCESSFUL."
+            )
+            return
 
         logger.info("Sending new neighbor list.")
         logger.debug(f"SPARQL Query:\n{query}")
         response = send_request({"query": query}, "post", "api/v0/graph/update")
         logger.debug(f"Response: {response}")
+        if response is None or response.status_code != 200:
+            logger.error("Sending new neighbor list - UNSUCCESSFUL.")
+            return
     else:
         logger.debug("I'm not hub")
         return
