@@ -186,7 +186,11 @@ def create_neighbors():
     swarm_pods = [f"{pod.metadata.name}:{pod.status.pod_ip}" for pod in pods.items]
 
     same_new_pods = new_pods_are_same(swarm_pods)
-    if same_new_pods or same_new_pods is None:
+
+    if same_new_pods is None:
+        logger.error("Couldn't check if there is a need for neighborhood update.")
+        return
+    elif same_new_pods:
         logger.info("There is no need to update the neighborhood.")
         return
 
