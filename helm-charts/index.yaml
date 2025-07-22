@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   swarm-agent:
   - apiVersion: v2
+    appVersion: 0.6.30-dev.0.main.b20fcd41
+    created: "2025-07-22T09:29:01.527641025Z"
+    description: GLACIATION Swarm Agent
+    digest: 584c962f948ccad58242fef2a0244294a4cffecd0a963e88bb83c2894f8bd410
+    name: swarm-agent
+    type: application
+    urls:
+    - https://glaciation-heu.github.io/swarm-agent/helm-charts/swarm-agent-0.6.30-dev.0.main.b20fcd41.tgz
+    version: 0.6.30-dev.0.main.b20fcd41
+  - apiVersion: v2
     appVersion: 0.6.29
     created: "2025-07-18T15:26:16.85840027Z"
     description: GLACIATION Swarm Agent
@@ -2581,4 +2591,4 @@ entries:
     urls:
     - https://glaciation-heu.github.io/swarm-agent/helm-charts/swarm-agent-0.1.1-dev.1.main.6d1bb6a7.tgz
     version: 0.1.1-dev.1.main.6d1bb6a7
-generated: "2025-07-18T15:26:16.857863848Z"
+generated: "2025-07-22T09:29:01.526448431Z"
