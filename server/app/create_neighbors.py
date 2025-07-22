@@ -162,8 +162,6 @@ def generate_neighborhood(
         logger.debug(
             f"Neighbors created for edge-fog-cloud! There are {len(swarm_pods)} nodes!"
         )
-    # else:
-    #     logger.error("Network kind not recognized!")
 
     return neighbors_dict
 
@@ -212,10 +210,10 @@ def create_neighbors():
         triples += "\n\t\t" + "<swarm:Car1> <swarm:hasColor> <swarm:Blue> ."
 
         query = f"""INSERT DATA {{
-    \tGRAPH <swarm-agent:neighbors> {{
-    \t\t{triples}
-    \t}}
-    }}"""
+\tGRAPH <swarm-agent:neighbors> {{
+\t\t{triples}
+\t}}
+}}"""
 
         logger.info("Clearing named graph <swarm-agent:neighbors>.")
         response = send_request(
