@@ -219,7 +219,7 @@ def create_neighbors():
                 ) + f"<{node}> <swarm:isNeighborOf> <{neighbor}> ."
 
         triples += "\n\t\t" + (
-            f"<{choose_edge_node(neighbors_dict, swarm_pods)}>"
+            f"<{choose_edge_node(neighbors_dict, swarm_pods)}> "
             "<swarm:hasKnowledgeOf> <swarm:Car1> ."
         )
         triples += "\n\t\t" + "<swarm:Car1> <swarm:hasColor> <swarm:Blue> ."
@@ -232,7 +232,7 @@ def create_neighbors():
 
         logger.info("Clearing named graph <swarm-agent:neighbors>.")
         response = send_request(
-            {"query": "CLEAR GRAPH <swarm-agent:neighbors>"},
+            {"query": "CLEAR SILENT GRAPH <swarm-agent:neighbors>"},
             "post",
             "api/v0/graph/update",
         )
@@ -243,7 +243,7 @@ def create_neighbors():
 
         logger.info("Clearing named graph <swarm-agent:pheromones>.")
         response = send_request(
-            {"query": "CLEAR GRAPH <swarm-agent:pheromones>"},
+            {"query": "CLEAR SILENT GRAPH <swarm-agent:pheromones>"},
             "post",
             "api/v0/graph/update",
         )
