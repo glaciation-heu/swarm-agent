@@ -290,8 +290,10 @@ class SwarmAgent:
         else:
             self.pheromone_table[self.keyword] = {}
 
-            logger.debug("I have {} neighbors", len(self.neighbors))
-            logger.debug("My neighbors: {}", self.neighbors)
+            logger.debug(
+                "Agent {} | I have {} neighbors", self.unique_id, len(self.neighbors)
+            )
+            logger.debug("Agent {} | My neighbors: {}", self.unique_id, self.neighbors)
 
             for neighbor in self.neighbors:
                 self.pheromone_table[self.keyword][neighbor["name"]] = 0.1
@@ -322,9 +324,13 @@ class SwarmAgent:
 
         unvisited_neighbors = self.getUnvisitedNeighbors()
 
-        logger.debug("my neighbors: {}", self.neighbors)
-        logger.debug("visited neighbors: {}", self.visited_nodes)
-        logger.debug("unvisited neighbors: {}", unvisited_neighbors)
+        logger.debug("Agent {} | my neighbors: {}", self.unique_id, self.neighbors)
+        logger.debug(
+            "Agent {} | visited neighbors: {}", self.unique_id, self.visited_nodes
+        )
+        logger.debug(
+            "Agent {} | unvisited neighbors: {}", self.unique_id, unvisited_neighbors
+        )
         if len(unvisited_neighbors) > 0:
             goodness_values = self.getGoodnessValuesUnvisited(unvisited_neighbors)
 
@@ -356,14 +362,16 @@ class SwarmAgent:
                 # chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
             # return the neighbors where the pheromone levels are higher
             # then the average pheromone level of the neighbors
-            logger.debug("chosen nodes: {}", chosen_nodes)
+            logger.debug("Agent {} | chosen nodes: {}", self.unique_id, chosen_nodes)
         else:
             chosen_nodes = []
 
         if len(chosen_nodes) > 0 and self.time_to_live > 1:
             for chosen_node in chosen_nodes:
                 logger.debug(
-                    "I am sending the message to {node} with IP address {node_ip}",
+                    "Agent {agent} | I am sending the message to \
+                        {node} with IP address {node_ip}",
+                    agent=self.unique_id,
                     node=chosen_node["name"],
                     node_ip=chosen_node["ip"],
                 )
@@ -374,7 +382,9 @@ class SwarmAgent:
                         f"http://{chosen_node['ip']}:80",
                     )
                     logger.debug(
-                        "Successfully sent message to {node} with IP address {node_ip}",
+                        "Agent {agent} | Successfully sent message to \
+                            {node} with IP address {node_ip}",
+                        agent=self.unique_id,
                         node=chosen_node["name"],
                         node_ip=chosen_node["ip"],
                     )
@@ -388,13 +398,15 @@ class SwarmAgent:
         else:
             visited = "Yes!" if len(unvisited_neighbors) == 0 else "No!"
             logger.debug(
-                "Ant terminated! ttl={ttl}, visited all neighbors {visited}",
+                "Agent {agent} | Ant terminated! ttl={ttl},\
+                    visited all neighbors {visited}",
+                self.unique_id,
                 ttl=self.time_to_live - 1,
                 visited=visited,
             )
 
         if len(results.results.bindings) > 0:
-            logger.debug("I am creating a backward ant...")
+            logger.debug("Agent {} | I am creating a backward ant...", self.unique_id)
             backward_message = self.create_backward_message(
                 results, len(self.visited_nodes)
             )
