@@ -190,6 +190,41 @@ class SwarmAgent:
 
         return response, pheromone_insert_query
 
+    def add_visitation_entry(self, local_node_id):
+        graph_uri = f"swarm-agent:visitation/{self.unique_id}"
+
+        visitation_insert_query = f"""INSERT DATA {{
+                GRAPH <{graph_uri}> {{ <swarm:{local_node_id}>
+                <swarm:wasVisitedBy> <{self.unique_id}> .
+                }} }}"""
+
+        params = {"query": visitation_insert_query}
+
+        response = send_message(params, metadata_service_url(), "api/v0/graph/update")
+
+        return response, visitation_insert_query
+
+    def was_node_visited_by_agent(self, local_node_id):
+        logger.debug(f"Agent {self.unique_id} | checking node {local_node_id}")
+        graph_uri = f"swarm-agent:visitation/{self.unique_id}"
+
+        ask_query = f"""
+        ASK {{
+            GRAPH <{graph_uri}> {{
+                <swarm:{local_node_id}> <swarm:wasVisitedBy> <{self.unique_id}> .
+            }}
+        }}
+        """
+
+        params = {"query": ask_query}
+        response = send_message(params, metadata_service_url(), "api/v0/graph/query")
+
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("boolean", False), ask_query
+        else:
+            return False, ask_query
+
     def update_in_two_steps(self, local_node_id, keyword, neighbor_id, ph_value):
         logger.debug("deleting old pheromone value...")
         response_delete, pheromone_delete_query = self.delete_pheromone_entry(
@@ -267,6 +302,7 @@ class SwarmAgent:
         if len(self.visited_nodes) > 0:
             self.link_costs[self.this_node] = self.latency
         self.visited_nodes.append({"name": self.this_node, "ip": self.this_node_ip})
+        self.add_visitation_entry(self.this_node)
         results = local_query(self.query)
         node_id = None
         for result in results.results.bindings:
@@ -322,7 +358,11 @@ class SwarmAgent:
                 content=self.pheromone_table[self.keyword],
             )
 
-        unvisited_neighbors = self.getUnvisitedNeighbors()
+        unvisited_neighbors = [
+            neighbor
+            for neighbor in self.getUnvisitedNeighbors()
+            if not self.was_node_visited_by_agent(neighbor)
+        ]
 
         logger.debug("Agent {} | my neighbors: {}", self.unique_id, self.neighbors)
         logger.debug(
