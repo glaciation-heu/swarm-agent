@@ -192,9 +192,12 @@ class SwarmAgent:
 
     def add_visitation_entry(self, local_node_id):
         graph_uri = f"swarm-agent:visitation/{self.unique_id}"
-
+        logger.debug(
+            f"Agent {self.unique_id} | add visitation entry, node \
+                {local_node_id['name']}"
+        )
         visitation_insert_query = f"""INSERT DATA {{
-                GRAPH <{graph_uri}> {{ <swarm:{local_node_id}>
+                GRAPH <{graph_uri}> {{ <swarm:{local_node_id['name']}>
                 <swarm:wasVisitedBy> <{self.unique_id}> .
                 }} }}"""
 
@@ -205,13 +208,14 @@ class SwarmAgent:
         return response, visitation_insert_query
 
     def was_node_visited_by_agent(self, local_node_id):
-        logger.debug(f"Agent {self.unique_id} | checking node {local_node_id}")
+        logger.debug(f"Agent {self.unique_id} | checking node {local_node_id['name']}")
         graph_uri = f"swarm-agent:visitation/{self.unique_id}"
 
         ask_query = f"""
         ASK {{
             GRAPH <{graph_uri}> {{
-                <swarm:{local_node_id}> <swarm:wasVisitedBy> <{self.unique_id}> .
+                <swarm:{local_node_id['name']}> <swarm:wasVisitedBy> \
+                    <{self.unique_id}> .
             }}
         }}
         """
