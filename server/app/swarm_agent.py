@@ -194,10 +194,10 @@ class SwarmAgent:
         graph_uri = f"swarm-agent:visitation/{self.unique_id}"
         logger.debug(
             f"Agent {self.unique_id} | add visitation entry, node \
-                {local_node_id['name']}"
+                {local_node_id}"
         )
         visitation_insert_query = f"""INSERT DATA {{
-                GRAPH <{graph_uri}> {{ <swarm:{local_node_id['name']}>
+                GRAPH <{graph_uri}> {{ <swarm:{local_node_id}>
                 <swarm:wasVisitedBy> <{self.unique_id}> .
                 }} }}"""
 
@@ -208,13 +208,13 @@ class SwarmAgent:
         return response, visitation_insert_query
 
     def was_node_visited_by_agent(self, local_node_id):
-        logger.debug(f"Agent {self.unique_id} | checking node {local_node_id['name']}")
+        logger.debug(f"Agent {self.unique_id} | checking node {local_node_id}")
         graph_uri = f"swarm-agent:visitation/{self.unique_id}"
 
         ask_query = f"""
         ASK {{
             GRAPH <{graph_uri}> {{
-                <swarm:{local_node_id['name']}> <swarm:wasVisitedBy> \
+                <swarm:{local_node_id}> <swarm:wasVisitedBy> \
                     <{self.unique_id}> .
             }}
         }}
@@ -365,7 +365,7 @@ class SwarmAgent:
         unvisited_neighbors = [
             neighbor
             for neighbor in self.getUnvisitedNeighbors()
-            if not self.was_node_visited_by_agent(neighbor)
+            if not self.was_node_visited_by_agent(neighbor["name"])
         ]
 
         logger.debug("Agent {} | my neighbors: {}", self.unique_id, self.neighbors)
