@@ -191,7 +191,8 @@ class SwarmAgent:
         return response, pheromone_insert_query
 
     def add_visitation_entry(self, local_node_id):
-        graph_uri = f"swarm-agent:visitation/{self.unique_id}"
+        clean_id = self.unique_id.replace(" ", "-").replace(":", "-")
+        graph_uri = f"swarm-agent:visitation/{clean_id}"
         logger.debug(
             f"Agent {self.unique_id} | Entering add_visitation_entry for node \
                 {local_node_id}"
@@ -199,13 +200,9 @@ class SwarmAgent:
 
         visitation_insert_query = f"""INSERT DATA {{
                 GRAPH <{graph_uri}> {{ <swarm:{local_node_id}>
-                <swarm:wasVisitedBy> <{self.unique_id}> .
-                }} }}"""
+                <swarm:wasVisitedBy> "{self.unique_id}" . }} }}"""
 
-        logger.debug(
-            f"Agent {self.unique_id} | Constructed SPARQL query: \
-                {visitation_insert_query}"
-        )
+        logger.debug(f"Agent {self.unique_id} | SPARQL q.: {visitation_insert_query}")
 
         params = {"query": visitation_insert_query}
         try:
@@ -226,7 +223,8 @@ class SwarmAgent:
 
     def was_node_visited_by_agent(self, local_node_id):
         logger.debug(f"Agent {self.unique_id} | checking node {local_node_id}")
-        graph_uri = f"swarm-agent:visitation/{self.unique_id}"
+        clean_id = self.unique_id.replace(" ", "-").replace(":", "-")
+        graph_uri = f"swarm-agent:visitation/{clean_id}"
 
         ask_query = f"""
         ASK {{
