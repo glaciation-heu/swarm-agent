@@ -193,19 +193,36 @@ class SwarmAgent:
     def add_visitation_entry(self, local_node_id):
         graph_uri = f"swarm-agent:visitation/{self.unique_id}"
         logger.debug(
-            f"Agent {self.unique_id} | add visitation entry, node \
+            f"Agent {self.unique_id} | Entering add_visitation_entry for node \
                 {local_node_id}"
         )
+
         visitation_insert_query = f"""INSERT DATA {{
                 GRAPH <{graph_uri}> {{ <swarm:{local_node_id}>
                 <swarm:wasVisitedBy> <{self.unique_id}> .
                 }} }}"""
 
+        logger.debug(
+            f"Agent {self.unique_id} | Constructed SPARQL query: \
+                {visitation_insert_query}"
+        )
+
         params = {"query": visitation_insert_query}
+        try:
+            response = send_message(
+                params, metadata_service_url(), "api/v0/graph/update"
+            )
+            logger.debug(
+                f"Agent {self.unique_id} | Response from metadata service: {response}"
+            )
 
-        response = send_message(params, metadata_service_url(), "api/v0/graph/update")
-
-        return response, visitation_insert_query
+            return response, visitation_insert_query
+        except Exception as e:
+            logger.error(
+                f"Agent {self.unique_id} \
+                    | Error sending request to metadata service: {e}"
+            )
+            raise
 
     def was_node_visited_by_agent(self, local_node_id):
         logger.debug(f"Agent {self.unique_id} | checking node {local_node_id}")
@@ -444,7 +461,7 @@ class SwarmAgent:
             logger.debug(
                 "Agent {agent} | Ant terminated! ttl={ttl},\
                     visited all neighbors {visited}",
-                self.unique_id,
+                agent=self.unique_id,
                 ttl=self.time_to_live - 1,
                 visited=visited,
             )
