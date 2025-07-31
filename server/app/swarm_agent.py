@@ -230,13 +230,15 @@ class SwarmAgent:
         ASK {{
             GRAPH <{graph_uri}> {{
                 <swarm:{local_node_id}> <swarm:wasVisitedBy> \
-                    <{self.unique_id}> .
+                    "{self.unique_id}" .
             }}
         }}
         """
+        logger.debug(f"Agent {self.unique_id} | Ask Q. {ask_query}")
 
         params = {"query": ask_query}
         response = send_message(params, metadata_service_url(), "api/v0/graph/query")
+        logger.debug(f"Agent {self.unique_id} | Ask Q. Resp. {response}")
 
         if response.status_code == 200:
             result = response.json()
