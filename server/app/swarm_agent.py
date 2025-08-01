@@ -382,7 +382,7 @@ class SwarmAgent:
         unvisited_neighbors = [
             neighbor
             for neighbor in self.getUnvisitedNeighbors()
-            if not self.was_node_visited_by_agent(neighbor["name"])
+            if not self.was_node_visited_by_agent(neighbor["name"])[0]
         ]
 
         logger.debug("Agent {} | my neighbors: {}", self.unique_id, self.neighbors)
