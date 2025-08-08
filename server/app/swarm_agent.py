@@ -191,16 +191,19 @@ class SwarmAgent:
         return response, pheromone_insert_query
 
     def add_visitation_entry(self, local_node_id):
-        clean_id = self.unique_id.replace(" ", "-").replace(":", "-")
-        graph_uri = f"swarm-agent:visitation/{clean_id}"
+        graph_uri = "swarm-agent:visitation"
         logger.debug(
             f"Agent {self.unique_id} | Entering add_visitation_entry for node \
                 {local_node_id}"
         )
 
-        visitation_insert_query = f"""INSERT DATA {{
-                GRAPH <{graph_uri}> {{ <swarm:{local_node_id}>
-                <swarm:wasVisitedBy> "{self.unique_id}" . }} }}"""
+        visitation_insert_query = f"""
+        INSERT DATA {{ GRAPH <{graph_uri}> {{
+            <{local_node_id}> <swarm:wasVisitedBy> "{self.unique_id}" .
+            <{local_node_id}:{self.unique_id}> <swarm:visitedAt> {int(time()*1000)} .
+            <{local_node_id}:{self.unique_id}> <swarm:hasNodeID> <{local_node_id}> .
+            <{local_node_id}:{self.unique_id}> <swarm:hasAgentID> "{self.unique_id}" .
+        }} }}"""
 
         logger.debug(f"Agent {self.unique_id} | SPARQL q.: {visitation_insert_query}")
 
@@ -223,13 +226,12 @@ class SwarmAgent:
 
     def was_node_visited_by_agent(self, local_node_id):
         logger.debug(f"Agent {self.unique_id} | checking node {local_node_id}")
-        clean_id = self.unique_id.replace(" ", "-").replace(":", "-")
-        graph_uri = f"swarm-agent:visitation/{clean_id}"
+        graph_uri = "swarm-agent:visitation"
 
         ask_query = f"""
         ASK {{
             GRAPH <{graph_uri}> {{
-                <swarm:{local_node_id}> <swarm:wasVisitedBy> \
+                <{local_node_id}> <swarm:wasVisitedBy> \
                     "{self.unique_id}" .
             }}
         }}
@@ -320,6 +322,13 @@ class SwarmAgent:
         return message
 
     def forward_ant_step(self):
+        if self.was_node_visited_by_agent(self.this_node):
+            logger.debug(
+                f"Agent {self.unique_id} | {self.this_node} was already "
+                "visited, not performing Forward Ant actions."
+            )
+            return False, EMPTY_SEARCH_RESPONSE
+
         if len(self.visited_nodes) > 0:
             self.link_costs[self.this_node] = self.latency
         self.visited_nodes.append({"name": self.this_node, "ip": self.this_node_ip})

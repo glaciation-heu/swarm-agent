@@ -49,3 +49,4 @@ envVariables:
     url: metadata-service
     port: 80
   pheromoneEvaporation: 0.1
+  removeVisitationThreshold: 86400000

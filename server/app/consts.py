@@ -17,3 +17,31 @@ QUERY_NEIGHBORS = """SELECT DISTINCT ?pod WHERE {
 
 PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-5"))
 PARAMETER_ENV_VARIABLES = {"PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"}}
+
+REMOVE_VISITATION_THRESHOLD = float(getenv("REMOVE_VISITATION_THRESHOLD", "86400000"))
+REMOVE_VISITATION_QUERY = f"""
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+DELETE {{
+  GRAPH <swarm-agent:visitation> {{
+    ?nodeID <swarm:wasVisitedBy> ?agentID .
+    ?visit <swarm:visitedAt> ?ts .
+    ?visit <swarm:hasNodeID> ?nodeID .
+    ?visit <swarm:hasAgentID> ?agentID .
+  }}
+}}
+WHERE {{
+  GRAPH <swarm-agent:visitation> {{
+    ?nodeID <swarm:wasVisitedBy> ?agentID .
+    ?visit <swarm:visitedAt> ?ts .
+    ?visit <swarm:hasNodeID> ?nodeID .
+    ?visit <swarm:hasAgentID> ?agentID .
+
+    FILTER (datatype(?ts) = xsd:integer)
+
+    BIND(xsd:integer((NOW() - "1970-01-01T00:00:00Z"^^xsd:dateTime) * 1000) AS ?nowMs)
+
+    FILTER (?ts < (?nowMs - {REMOVE_VISITATION_THRESHOLD}))
+  }}
+}}
+"""
