@@ -57,7 +57,7 @@ class SwarmAgent:
         self.link_costs = message.link_costs
         now_utc = datetime.now(timezone.utc)
         if message.unique_id == "":
-            self.unique_id = now_utc.strftime("%Y-%m-%d %H:%M:%S.%f")
+            self.unique_id = now_utc.strftime("%Y%m%dT%H%M%S%f")
             logger.debug(
                 f"New agent: {self.type} ant initialized with id '{self.unique_id}'."
             )
