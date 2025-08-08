@@ -229,24 +229,26 @@ class SwarmAgent:
         graph_uri = "swarm-agent:visitation"
 
         ask_query = f"""
-        ASK {{
-            GRAPH <{graph_uri}> {{
+        SELECT (COUNT(*) > 0 AS ?exists) {{
+            WHERE {{ GRAPH <{graph_uri}> {{
                 <{local_node_id}> <swarm:wasVisitedBy> \
                     "{self.unique_id}" .
             }}
-        }}
+        }} }}
         """
         logger.debug(f"Agent {self.unique_id} | Ask Q. {ask_query}")
 
-        params = {"query": ask_query}
-        response = send_message(params, metadata_service_url(), "api/v0/graph/query")
-        logger.debug(f"Agent {self.unique_id} | Ask Q. Resp. {response}")
-
-        if response.status_code == 200:
-            result = response.json()
-            return result.get("boolean", False), ask_query
-        else:
+        try:
+            result = local_query(ask_query)
+            logger.debug(f"Agent {self.unique_id} | Ask Q. Resp. {result}")
+        except Exception:
+            logger.exception("An error occured")
             return False, ask_query
+
+        if len(result.results.bindings) == 1 and "exists" in result.results.bindings[0]:
+            return result.results.bindings[0]["exists"]["value"] == "true", ask_query
+
+        return False, ask_query
 
     def update_in_two_steps(self, local_node_id, keyword, neighbor_id, ph_value):
         logger.debug("deleting old pheromone value...")
