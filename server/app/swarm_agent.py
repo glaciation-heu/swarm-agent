@@ -394,6 +394,8 @@ class SwarmAgent:
             neighbor
             for neighbor in self.getUnvisitedNeighbors()
             if not self.was_node_visited_by_agent(neighbor["name"])[0]
+            # TODO remove was_node_visited_by_agent function call from here
+            # it's enough to have it at the beginning of forward_ant_step
         ]
 
         logger.debug("Agent {} | my neighbors: {}", self.unique_id, self.neighbors)
