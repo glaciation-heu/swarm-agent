@@ -224,7 +224,7 @@ class SwarmAgent:
             )
             raise
 
-    def was_node_visited_by_agent(self, local_node_id):
+    def was_node_visited_by_agent(self, local_node_id: str) -> bool:
         logger.debug(f"Agent {self.unique_id} | checking node {local_node_id}")
         graph_uri = "swarm-agent:visitation"
 
@@ -243,12 +243,12 @@ class SwarmAgent:
             logger.debug(f"Agent {self.unique_id} | Ask Q. Resp. {result}")
         except Exception:
             logger.exception("An error occured")
-            return False, ask_query
+            return False
 
         if len(result.results.bindings) == 1 and "exists" in result.results.bindings[0]:
-            return result.results.bindings[0]["exists"]["value"] == "true", ask_query
+            return str(result.results.bindings[0]["exists"]["value"]).lower() == "true"
 
-        return False, ask_query
+        return False
 
     def update_in_two_steps(self, local_node_id, keyword, neighbor_id, ph_value):
         logger.debug("deleting old pheromone value...")
@@ -393,7 +393,7 @@ class SwarmAgent:
         unvisited_neighbors = [
             neighbor
             for neighbor in self.getUnvisitedNeighbors()
-            if not self.was_node_visited_by_agent(neighbor["name"])[0]
+            if not self.was_node_visited_by_agent(neighbor["name"])
             # TODO remove was_node_visited_by_agent function call from here
             # it's enough to have it at the beginning of forward_ant_step
         ]
