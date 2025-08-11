@@ -39,7 +39,14 @@ WHERE {{
 
     FILTER (datatype(?ts) = xsd:integer)
 
-    BIND(xsd:integer((NOW() - "1970-01-01T00:00:00Z"^^xsd:dateTime) * 1000) AS ?nowMs)
+    BIND(NOW() - "1970-01-01T00:00:00Z"^^xsd:dateTime AS ?diff)
+    BIND((
+        SECONDS(?diff)
+        + MINUTES(?diff) * 60
+        + HOURS(?diff) * 3600
+        + DAY(?diff) * 86400
+    ) * 1000 AS ?nowMs)
+
 
     FILTER (?ts < (?nowMs - {REMOVE_VISITATION_THRESHOLD}))
   }}
