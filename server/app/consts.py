@@ -47,7 +47,6 @@ WHERE {{
         + DAY(?diff) * 86400
     ) * 1000 AS ?nowMs)
 
-
     FILTER (?ts < (?nowMs - {REMOVE_VISITATION_THRESHOLD}))
   }}
 }}
