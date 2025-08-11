@@ -229,12 +229,12 @@ class SwarmAgent:
         graph_uri = "swarm-agent:visitation"
 
         ask_query = f"""
-        SELECT (COUNT(*) > 0 AS ?exists) {{
+        SELECT (COUNT(*) > 0 AS ?exists)
             WHERE {{ GRAPH <{graph_uri}> {{
                 <{local_node_id}> <swarm:wasVisitedBy> \
                     "{self.unique_id}" .
             }}
-        }} }}
+        }}
         """
         logger.debug(f"Agent {self.unique_id} | Ask Q. {ask_query}")
 
