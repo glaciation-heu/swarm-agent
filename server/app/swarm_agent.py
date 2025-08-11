@@ -190,19 +190,19 @@ class SwarmAgent:
 
         return response, pheromone_insert_query
 
-    def add_visitation_entry(self, local_node_id):
+    def add_visitation_entry(self, node_id):
         graph_uri = "swarm-agent:visitation"
         logger.debug(
             f"Agent {self.unique_id} | Entering add_visitation_entry for node \
-                {local_node_id}"
+                {node_id}"
         )
 
         visitation_insert_query = f"""
         INSERT DATA {{ GRAPH <{graph_uri}> {{
-            <{local_node_id}> <swarm:wasVisitedBy> "{self.unique_id}" .
-            <{local_node_id}:{self.unique_id}> <swarm:visitedAt> {int(time()*1000)} .
-            <{local_node_id}:{self.unique_id}> <swarm:hasNodeID> <{local_node_id}> .
-            <{local_node_id}:{self.unique_id}> <swarm:hasAgentID> "{self.unique_id}" .
+            <node:{node_id}> <swarm:wasVisitedBy> "{self.unique_id}" .
+            <{node_id}:{self.unique_id}> <swarm:visitedAt> {int(time()*1000)} .
+            <{node_id}:{self.unique_id}> <swarm:hasNodeID> <node:{node_id}> .
+            <{node_id}:{self.unique_id}> <swarm:hasAgentID> "{self.unique_id}" .
         }} }}"""
 
         logger.debug(f"Agent {self.unique_id} | SPARQL q.: {visitation_insert_query}")
@@ -224,14 +224,14 @@ class SwarmAgent:
             )
             raise
 
-    def was_node_visited_by_agent(self, local_node_id: str) -> bool:
-        logger.debug(f"Agent {self.unique_id} | checking node {local_node_id}")
+    def was_node_visited_by_agent(self, node_id: str) -> bool:
+        logger.debug(f"Agent {self.unique_id} | checking node {node_id}")
         graph_uri = "swarm-agent:visitation"
 
         ask_query = f"""
         SELECT (COUNT(*) > 0 AS ?exists)
             WHERE {{ GRAPH <{graph_uri}> {{
-                <{local_node_id}> <swarm:wasVisitedBy> \
+                <node:{node_id}> <swarm:wasVisitedBy> \
                     "{self.unique_id}" .
             }}
         }}
