@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 import time
 from os import environ
@@ -52,20 +52,30 @@ def metadata_service_url():
     return url
 
 
-def make_request_with_retries(url, params, max_retries=5, backoff_factor=1):
+def make_request_with_retries(
+    url: str,
+    params: dict[str, Any],
+    request_type: Literal["get", "post"] = "get",
+    max_retries: int = 5,
+    backoff_factor: float = 1,
+) -> requests.Response:
     """
     Make a request with retries and exponential backoff.
 
     :param url: The URL to make the request to.
     :param max_retries: The maximum number of retry attempts.
     :param backoff_factor: The factor by which the delay increases between retries.
+    :param request_type: The type of the request (can be get or post).
     :return: The response object if the request is successful.
     :raises: requests.exceptions.RequestException if all retries fail.
     """
     attempt = 0
     while attempt < max_retries:
         try:
-            response = requests.get(url, params=params, timeout=10)
+            if request_type == "get":
+                response = requests.get(url, params=params, timeout=10)
+            else:
+                response = requests.post(url, json=params, timeout=10)
             response.raise_for_status()  # Raise an exception for HTTP errors
             logger.info(f"Request to {url} succeeded on attempt {attempt + 1}")
             return response
@@ -109,7 +119,7 @@ def send_message(message, url, endpoint="api/v0/create_agent"):
     url = f"{url}/{endpoint}"
 
     try:
-        response = requests.post(url, json=message)
+        response = make_request_with_retries(url, message, "post")
         if response.status_code != 200:
             logger.error(f"Error: {response.status_code}, {response.text}")
 
