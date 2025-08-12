@@ -8,6 +8,8 @@ spec:
   selector:
     matchLabels:
       {{- include "app.selectorLabels" . | nindent 6 }}
+  updateStrategy:
+    {{- toYaml .Values.updateStrategy | indent 4 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}

@@ -50,3 +50,8 @@ envVariables:
     port: 80
   pheromoneEvaporation: 0.1
   removeVisitationThreshold: 86400000
+
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 50%
