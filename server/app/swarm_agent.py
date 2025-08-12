@@ -378,11 +378,11 @@ class SwarmAgent:
                     self.pheromone_table[self.keyword][neighbor["name"]],
                 )
 
-            logger.debug(
-                "Add response: {response_add}, delete response: {response_delete}",
-                response_add=response_add.json(),
-                response_delete=response_delete.json(),
-            )
+                logger.debug(
+                    "Add response: {response_add}, delete response: {response_delete}",
+                    response_add=response_add.json() if response_add else None,
+                    response_delete=response_delete.json() if response_delete else None,
+                )
 
             logger.debug(
                 "pheromone_table[{keyword}] = {content}",
