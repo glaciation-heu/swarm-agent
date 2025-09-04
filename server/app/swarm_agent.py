@@ -250,6 +250,41 @@ class SwarmAgent:
 
         return False
 
+    def update_in_one_step(self, local_node_id, keyword, neighbor_id, ph_value):
+        logger.debug("deleting old pheromone value and writing the new if needed...")
+        association = f"{local_node_id}:" + keyword + "---" + neighbor_id
+        pheromone_insert_query = f"""INSERT {{
+        GRAPH <swarm-agent:pheromones> {{
+            <swarm:{local_node_id}> <swarm:hasAssociation> <{association}> .
+            <{association}> <swarm:hasKeyword> "{keyword}" ;
+                            <swarm:hasNeighbor> "{neighbor_id}" ;
+                            <swarm:hasPheromoneValue> {ph_value} .
+        }} }}"""
+
+        pheromone_update_query = f"""DELETE {{
+        GRAPH <swarm-agent:pheromones> {{
+            <swarm:{local_node_id}> <swarm:hasAssociation> <{association}> .
+            <{association}> <swarm:hasKeyword> "{keyword}" ;
+                        <swarm:hasNeighbor> "{neighbor_id}" ;
+                        <swarm:hasPheromoneValue> ?pheromoneValue .
+            }}
+        }}
+        {pheromone_insert_query if ph_value > PHEROMONE_THRESHOLD else ""}
+        WHERE {{
+        GRAPH <swarm-agent:pheromones> {{
+            <swarm:{local_node_id}> <swarm:hasAssociation> <{association}> .
+            <{association}> <swarm:hasKeyword> "{keyword}" ;
+                        <swarm:hasNeighbor> "{neighbor_id}" ;
+                        <swarm:hasPheromoneValue> ?pheromoneValue .
+            }}
+        }}"""
+
+        params = {"query": pheromone_update_query}
+
+        response = send_message(params, metadata_service_url(), "api/v0/graph/update")
+
+        return response
+
     def update_in_two_steps(self, local_node_id, keyword, neighbor_id, ph_value):
         logger.debug("deleting old pheromone value...")
         response_delete, pheromone_delete_query = self.delete_pheromone_entry(
@@ -366,12 +401,8 @@ class SwarmAgent:
             for neighbor in self.neighbors:
                 self.pheromone_table[self.keyword][neighbor["name"]] = 0.1
                 logger.debug("I am updating the pheromone table...")
-                (
-                    response_add,
-                    pheromone_add_query,
-                    response_delete,
-                    pheromone_delete_query,
-                ) = self.update_in_two_steps(
+
+                response_update = self.update_in_one_step(
                     self.this_node,
                     self.keyword,
                     neighbor["name"],
@@ -379,9 +410,8 @@ class SwarmAgent:
                 )
 
                 logger.debug(
-                    "Add response: {response_add}, delete response: {response_delete}",
-                    response_add=response_add.json() if response_add else None,
-                    response_delete=response_delete.json() if response_delete else None,
+                    "Update response: {response_update}",
+                    response_update=response_update.json() if response_update else None,
                 )
 
             logger.debug(
@@ -571,7 +601,7 @@ class SwarmAgent:
                 keyword=self.keyword,
             )
 
-            self.update_in_two_steps(
+            self.update_in_one_step(
                 self.this_node,
                 self.keyword,
                 target_neighbor,
@@ -613,7 +643,7 @@ class SwarmAgent:
                     ph_val=pheromone_table[keyword][neighbor]
                     * (1 - self.parameters["p"]),
                 )
-                self.update_in_two_steps(
+                self.update_in_one_step(
                     self.this_node,
                     keyword,
                     neighbor,
