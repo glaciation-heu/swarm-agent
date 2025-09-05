@@ -253,7 +253,7 @@ class SwarmAgent:
     def update_in_one_step(self, local_node_id, keyword, neighbor_id, ph_value):
         logger.debug("deleting old pheromone value and writing the new if needed...")
         association = f"{local_node_id}:" + keyword + "---" + neighbor_id
-        pheromone_insert_query = f"""INSERT {{
+        pheromone_insert_query = f""";\nINSERT DATA {{
         GRAPH <swarm-agent:pheromones> {{
             <swarm:{local_node_id}> <swarm:hasAssociation> <{association}> .
             <{association}> <swarm:hasKeyword> "{keyword}" ;
@@ -269,7 +269,6 @@ class SwarmAgent:
                         <swarm:hasPheromoneValue> ?pheromoneValue .
             }}
         }}
-        {pheromone_insert_query if ph_value > PHEROMONE_THRESHOLD else ""}
         WHERE {{
         GRAPH <swarm-agent:pheromones> {{
             <swarm:{local_node_id}> <swarm:hasAssociation> <{association}> .
@@ -277,7 +276,7 @@ class SwarmAgent:
                         <swarm:hasNeighbor> "{neighbor_id}" ;
                         <swarm:hasPheromoneValue> ?pheromoneValue .
             }}
-        }}"""
+        }}{pheromone_insert_query if ph_value > PHEROMONE_THRESHOLD else ""}"""
 
         params = {"query": pheromone_update_query}
 
