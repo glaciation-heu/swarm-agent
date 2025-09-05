@@ -54,4 +54,4 @@ envVariables:
 updateStrategy:
   type: RollingUpdate
   rollingUpdate:
-    maxUnavailable: 50%
+    maxUnavailable: 100%
