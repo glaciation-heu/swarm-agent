@@ -23,6 +23,7 @@ from app.utils import (
     local_query,
     metadata_service_url,
     send_message,
+    send_message_nowait,
 )
 
 
@@ -479,25 +480,10 @@ class SwarmAgent:
                     node_ip=chosen_node["ip"],
                 )
                 forward_message.time_sent = time()
-                try:
-                    send_message(
-                        forward_message.model_dump(),
-                        f"http://{chosen_node['ip']}:80",
-                    )
-                    logger.debug(
-                        "Agent {agent} | Successfully sent message to \
-                            {node} with IP address {node_ip}",
-                        agent=self.unique_id,
-                        node=chosen_node["name"],
-                        node_ip=chosen_node["ip"],
-                    )
-                except ConnectionError:
-                    logger.exception(
-                        "Connection error occurred while trying to send the message \
-                            to {node} with IP address {node_ip}!",
-                        node=chosen_node["name"],
-                        node_ip=chosen_node["ip"],
-                    )
+                send_message_nowait(
+                    forward_message.model_dump(),
+                    f"http://{chosen_node['ip']}:80",
+                )
         else:
             visited = "Yes!" if len(unvisited_neighbors) == 0 else "No!"
             logger.debug(
@@ -515,7 +501,7 @@ class SwarmAgent:
             )
             backward_message.time_sent = time()
             logger.debug("Sending backward message...")
-            send_message(
+            send_message_nowait(
                 backward_message.model_dump(), f"http://{self.this_node_ip}:80"
             )
 
@@ -610,7 +596,7 @@ class SwarmAgent:
         if self.time_to_live > 1:
             backward_message = self.create_backward_message(self.results)
             backward_message.time_sent = time()
-            send_message(
+            send_message_nowait(
                 backward_message.model_dump(),
                 f"http://{self.visited_nodes[self.time_to_live-2]['ip']}:80",
             )

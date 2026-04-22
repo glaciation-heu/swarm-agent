@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from queue import Queue
 from threading import Thread
 from time import time
@@ -18,6 +19,11 @@ from app.utils import local_query
 
 router = APIRouter()
 queue: Queue[Message] = Queue()
+
+# Thread pool for processing incoming ant messages concurrently.
+# Each worker runs a full SwarmAgent.step() — multiple ants can progress in
+# parallel so a slow HTTP call in one ant doesn't stall all the others.
+_process_executor = ThreadPoolExecutor(max_workers=8, thread_name_prefix="ant-worker")
 
 
 @router.get(
@@ -92,25 +98,28 @@ async def pheromone_pointing_to_neighbor(
         )
 
 
+def _process_message(message: Message) -> None:
+    try:
+        swarm_agent = SwarmAgent(message, "app/parameters.json")
+
+        is_backward_ant_done, results = swarm_agent.step()
+
+        if is_backward_ant_done:
+            logger.info(
+                "A Backward Ant with id '{id}' carried back "
+                "a response for query '{query}'.",
+                id=swarm_agent.unique_id,
+                query=swarm_agent.query,
+            )
+            logger.info(f"Results:\n{results.model_dump_json(indent=2)}")
+    except Exception:
+        logger.exception("An error occurred")
+
+
 def swarm_agent_control():
     while True:
         message = queue.get()
-
-        try:
-            swarm_agent = SwarmAgent(message, "app/parameters.json")
-
-            is_backward_ant_done, results = swarm_agent.step()
-
-            if is_backward_ant_done:
-                logger.info(
-                    "A Backward Ant with id '{id}' carried back "
-                    "a response for query '{query}'.",
-                    id=swarm_agent.unique_id,
-                    query=swarm_agent.query,
-                )
-                logger.info(f"Results:\n{results.model_dump_json(indent=2)}")
-        except Exception:
-            logger.exception("An error occurred")
+        _process_executor.submit(_process_message, message)
 
 
 swarm_agent_control_thread = Thread(target=swarm_agent_control, daemon=True)

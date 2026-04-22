@@ -1,11 +1,13 @@
 from typing import Any, Literal
 
 import time
+from concurrent.futures import ThreadPoolExecutor
 from os import environ
 
 import requests
 from kubernetes import client, config
 from loguru import logger
+from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError, Timeout
 
 from app.consts import (
@@ -15,6 +17,15 @@ from app.consts import (
     MY_POD_NAMESPACE,
 )
 from app.schemas import EMPTY_SEARCH_RESPONSE, SearchResponse
+
+# Shared session reuses TCP connections across requests to the same host.
+_session = requests.Session()
+_adapter = HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=0)
+_session.mount("http://", _adapter)
+_session.mount("https://", _adapter)
+
+# Thread pool for fire-and-forget inter-agent POSTs.
+_send_executor = ThreadPoolExecutor(max_workers=16, thread_name_prefix="agent-send")
 
 
 def find_metadata_service_ip():
@@ -58,37 +69,41 @@ def make_request_with_retries(
     request_type: Literal["get", "post"] = "get",
     max_retries: int = 5,
     backoff_factor: float = 1,
+    timeout: tuple[float, float] = (1.0, 5.0),
 ) -> requests.Response:
     """
     Make a request with retries and exponential backoff.
 
-    :param url: The URL to make the request to.
-    :param max_retries: The maximum number of retry attempts.
-    :param backoff_factor: The factor by which the delay increases between retries.
-    :param request_type: The type of the request (can be get or post).
-    :return: The response object if the request is successful.
-    :raises: requests.exceptions.RequestException if all retries fail.
+    timeout is a (connect_timeout, read_timeout) tuple in seconds.
+    Callers that need faster failure (agent-to-agent) should pass a shorter timeout.
     """
     attempt = 0
     while attempt < max_retries:
         try:
             if request_type == "get":
-                response = requests.get(url, params=params, timeout=10)
+                response = _session.get(url, params=params, timeout=timeout)
             else:
-                response = requests.post(url, json=params, timeout=10)
-            response.raise_for_status()  # Raise an exception for HTTP errors
+                response = _session.post(url, json=params, timeout=timeout)
+            response.raise_for_status()
             logger.info(f"Request to {url} succeeded on attempt {attempt + 1}")
             return response
         except (ConnectionError, Timeout) as e:
             attempt += 1
-            wait_time = backoff_factor * (2 ** (attempt - 1))
-            logger.debug(
-                "Attempt {attempt} failed: {e}. Retrying in {wait_time} seconds...",
-                attempt=attempt,
-                e=e,
-                wait_time=wait_time,
-            )
-            time.sleep(wait_time)
+            if attempt < max_retries:
+                wait_time = backoff_factor * (2 ** (attempt - 1))
+                logger.debug(
+                    "Attempt {attempt} failed: {e}. Retrying in {wait_time} seconds...",
+                    attempt=attempt,
+                    e=e,
+                    wait_time=wait_time,
+                )
+                time.sleep(wait_time)
+            else:
+                logger.debug(
+                    "Attempt {attempt} failed: {e}. No more retries.",
+                    attempt=attempt,
+                    e=e,
+                )
     raise requests.exceptions.RequestException(f"All {max_retries} attempts failed.")
 
 
@@ -115,11 +130,23 @@ def local_query(query: str) -> SearchResponse:
     return EMPTY_SEARCH_RESPONSE
 
 
-def send_message(message, url, endpoint="api/v0/create_agent"):
-    url = f"{url}/{endpoint}"
+def send_message(
+    message: dict[str, Any],
+    url: str,
+    endpoint: str = "api/v0/create_agent",
+    timeout: tuple[float, float] = (1.0, 5.0),
+) -> requests.Response:
+    full_url = f"{url}/{endpoint}"
 
     try:
-        response = make_request_with_retries(url, message, "post")
+        response = make_request_with_retries(
+            full_url,
+            message,
+            "post",
+            max_retries=3,
+            backoff_factor=0.3,
+            timeout=timeout,
+        )
         if response.status_code != 200:
             logger.error(f"Error: {response.status_code}, {response.text}")
 
@@ -127,6 +154,26 @@ def send_message(message, url, endpoint="api/v0/create_agent"):
     except Exception as e:
         logger.exception("An error occurred")
         raise e
+
+
+def send_message_nowait(
+    message: dict[str, Any], url: str, endpoint: str = "api/v0/create_agent"
+) -> None:
+    """Submit a fire-and-forget inter-agent POST and return immediately.
+
+    Uses a tighter timeout than send_message because peer agents on the K8s
+    internal network should accept the message quickly (they just enqueue it).
+    Errors are logged but not propagated — lost ants are acceptable in the
+    swarm algorithm.
+    """
+
+    def _send() -> None:
+        try:
+            send_message(message, url, endpoint, timeout=(0.5, 3.0))
+        except Exception:
+            logger.exception("Background send to {}/{} failed", url, endpoint)
+
+    _send_executor.submit(_send)
 
 
 def get_swarm_agent_neighbors(this_node, this_node_ip):
