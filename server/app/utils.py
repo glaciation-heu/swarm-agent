@@ -109,14 +109,18 @@ def make_request_with_retries(
 
 def local_query(query: str) -> SearchResponse:
     """
-    Queries Local Metadata service
+    Queries Local Metadata service.
+
+    Uses longer timeouts than inter-agent calls since SPARQL queries can be complex.
     """
     params = {"query": query}
     base_url = f"{metadata_service_url()}/api/v0/graph"
 
     try:
-        # response = requests.get(base_url, params=params)
-        response = make_request_with_retries(base_url, params)
+        # Metadata service SPARQL queries may take longer; allow up to 15s read timeout
+        response = make_request_with_retries(
+            base_url, params, timeout=(2.0, 15.0), max_retries=3, backoff_factor=0.5
+        )
     # except Exception as e:
     except requests.exceptions.RequestException as e:
         logger.error(str(e))
