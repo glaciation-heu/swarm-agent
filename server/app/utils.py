@@ -51,6 +51,20 @@ def find_metadata_service_ip():
         return
 
 
+def find_all_metadata_service_ips() -> dict[str, str]:
+    """Returns {node_name: pod_ip} for every metadata-service pod in the cluster."""
+    if "KUBERNETES_SERVICE_HOST" in environ:
+        config.load_incluster_config()
+    else:
+        logger.error("Not running in a Kubernetes cluster.")
+        return {}
+
+    v1 = client.CoreV1Api()
+    label_selector = "app.kubernetes.io/name=metadata-service"
+    pods = v1.list_namespaced_pod(MY_POD_NAMESPACE, label_selector=label_selector)
+    return {pod.spec.node_name: pod.status.pod_ip for pod in pods.items}
+
+
 def metadata_service_url():
     ip = find_metadata_service_ip()
 

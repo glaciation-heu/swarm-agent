@@ -10,15 +10,23 @@ import requests
 from kubernetes import client, config
 from loguru import logger
 
-from app.consts import MY_POD_NAME, MY_POD_NAMESPACE, QUERY_NEIGHBORS
+from app.consts import (
+    METADATA_SERVICE_PORT,
+    MY_POD_NAME,
+    MY_POD_NAMESPACE,
+    QUERY_NEIGHBORS,
+)
 from app.schemas import SearchResponse
-from app.utils import metadata_service_url
+from app.utils import find_all_metadata_service_ips, metadata_service_url
 
 
 def send_request(
-    data: dict[str, str], method: Literal["get", "post"], endpoint: str
+    data: dict[str, str],
+    method: Literal["get", "post"],
+    endpoint: str,
+    base_url: str | None = None,
 ) -> requests.Response | None:
-    url = f"{metadata_service_url()}/{endpoint}"
+    url = f"{base_url or metadata_service_url()}/{endpoint}"
 
     response = None
 
@@ -230,17 +238,6 @@ def create_neighbors():
 \t}}
 }}"""
 
-        logger.info("Clearing named graph <swarm-agent:neighbors>.")
-        response = send_request(
-            {"query": "CLEAR SILENT GRAPH <swarm-agent:neighbors>"},
-            "post",
-            "api/v0/graph/update",
-        )
-        logger.debug(f"Response: {response}")
-        if response is None or response.status_code != 200:
-            logger.error("Clearing named graph <swarm-agent:neighbors> - UNSUCCESSFUL.")
-            return
-
         logger.info("Clearing named graph <swarm-agent:pheromones>.")
         response = send_request(
             {"query": "CLEAR SILENT GRAPH <swarm-agent:pheromones>"},
@@ -254,13 +251,35 @@ def create_neighbors():
             )
             return
 
-        logger.info("Sending new neighbor list.")
-        logger.debug(f"SPARQL Query:\n{query}")
-        response = send_request({"query": query}, "post", "api/v0/graph/update")
-        logger.debug(f"Response: {response}")
-        if response is None or response.status_code != 200:
-            logger.error("Sending new neighbor list - UNSUCCESSFUL.")
+        all_metadata_ips = find_all_metadata_service_ips()
+        if not all_metadata_ips:
+            logger.error(
+                "Could not retrieve metadata service IPs for topology fan-out."
+            )
             return
+
+        logger.debug(f"SPARQL Query:\n{query}")
+        for node_name, pod_ip in all_metadata_ips.items():
+            node_url = f"http://{pod_ip}:{METADATA_SERVICE_PORT}"
+            logger.info(f"Writing topology to node {node_name} ({node_url}).")
+
+            response = send_request(
+                {"query": "CLEAR SILENT GRAPH <swarm-agent:neighbors>"},
+                "post",
+                "api/v0/graph/update",
+                base_url=node_url,
+            )
+            if response is None or response.status_code != 200:
+                logger.error(
+                    f"Clearing <swarm-agent:neighbors> on {node_name} - UNSUCCESSFUL."
+                )
+                continue
+
+            response = send_request(
+                {"query": query}, "post", "api/v0/graph/update", base_url=node_url
+            )
+            if response is None or response.status_code != 200:
+                logger.error(f"Sending neighbor list to {node_name} - UNSUCCESSFUL.")
     else:
         logger.debug("I'm not hub")
         return
