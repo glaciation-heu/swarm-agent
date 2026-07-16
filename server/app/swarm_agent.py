@@ -59,7 +59,7 @@ class SwarmAgent:
         now_utc = datetime.now(timezone.utc)
         if message.unique_id == "":
             self.unique_id = now_utc.strftime("%Y%m%dT%H%M%S%f")
-            logger.debug(
+            logger.info(
                 f"New agent: {self.type} ant initialized with id '{self.unique_id}'."
             )
         else:
@@ -371,17 +371,30 @@ class SwarmAgent:
         self.visited_nodes.append({"name": self.this_node, "ip": self.this_node_ip})
         self.add_visitation_entry(self.this_node)
         results = local_query(self.query)
-        node_id = None
-        for result in results.results.bindings:
-            node_id = result["swarmNode"]["value"]
-            node_id = node_id.split(":")[0]
+        bindings = results.results.bindings
+        if bindings and "swarmNode" in bindings[0]:
+            # hasKnowledgeOf model: all topology data is replicated to every node.
+            # Only this node's own Car entries are a hit; filter out the rest so
+            # the backward-ant deposit strength counts only local matches.
+            local_bindings = [
+                b
+                for b in bindings
+                if b["swarmNode"]["value"].split(":")[0] == self.this_node
+            ]
+            if local_bindings:
+                results.results.bindings = local_bindings
+                node_id = self.this_node
+            else:
+                results = EMPTY_SEARCH_RESPONSE
+                node_id = None
+        else:
+            # Per-node data model: non-empty results mean data lives on this node.
+            node_id = self.this_node if bindings else None
         logger.debug(
             "Results found are for node: {node_id}, this node is {this_node}",
             node_id=node_id,
             this_node=self.this_node,
         )
-        if node_id != self.this_node:
-            results = EMPTY_SEARCH_RESPONSE
 
         self.pheromone_table = get_pheromone_table(self.this_node, self.neighbors)
         if self.keyword in self.pheromone_table:
@@ -429,7 +442,7 @@ class SwarmAgent:
         ]
 
         logger.debug("Agent {} | my neighbors: {}", self.unique_id, self.neighbors)
-        logger.debug(
+        logger.info(
             "Agent {} | visited neighbors: {}", self.unique_id, self.visited_nodes
         )
         logger.debug(
@@ -537,19 +550,11 @@ class SwarmAgent:
         return goodness_values
 
     def explore(self, goodness_values, unvisited_neighbors):
-        total_goodness = sum(goodness_values)
-        probabilities = [value / total_goodness for value in goodness_values]
-        logger.debug("probabilities: {}", probabilities)
-        is_chosen = [random.random() <= prob for prob in probabilities]
-        chosen_nodes = [
-            neighbor for i, neighbor in enumerate(unvisited_neighbors) if is_chosen[i]
-        ]
-        if len(chosen_nodes) == 0:
-            logger.debug(
-                "No nodes chosen through probabilities. Reverting to exploitation."
-            )
-            chosen_nodes = self.exploit(goodness_values, unvisited_neighbors)
-        return chosen_nodes
+        # Pick exactly one neighbor, weighted by goodness. When beta=0 (random-walk
+        # mode) all weights are equal, so this reduces to a uniform random hop.
+        chosen = random.choices(unvisited_neighbors, weights=goodness_values, k=1)
+        logger.debug("explore chose: {}", chosen)
+        return chosen
 
     def exploit(self, goodness_values, unvisited_neighbors):
         mean_goodness = sum(goodness_values) / len(goodness_values)
@@ -564,10 +569,9 @@ class SwarmAgent:
         return chosen_nodes
 
     def backward_ant_step(self):
-        # hardcoded parameters for now
-        w_d = 0.5
-        t_max = 3
-        r_max = 10
+        w_d = self.parameters["w_d"]
+        t_max = self.parameters["t_max"]
+        r_max = self.parameters["r_max"]
 
         if len(self.link_costs) > 0 and self.time_to_live < len(self.visited_nodes):
             self.pheromone_table = get_pheromone_table(self.this_node, self.neighbors)
@@ -586,11 +590,14 @@ class SwarmAgent:
                 keyword=self.keyword,
             )
 
+            current_ph = self.pheromone_table.get(self.keyword, {}).get(
+                target_neighbor, 0.1
+            )
             self.update_in_one_step(
                 self.this_node,
                 self.keyword,
                 target_neighbor,
-                self.pheromone_table[self.keyword][target_neighbor] + z,
+                current_ph + z,
             )
 
         if self.time_to_live > 1:

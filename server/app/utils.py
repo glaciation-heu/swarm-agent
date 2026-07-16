@@ -118,6 +118,7 @@ def make_request_with_retries(
                     attempt=attempt,
                     e=e,
                 )
+    logger.error(f"All {max_retries} attempts to {url} failed.")
     raise requests.exceptions.RequestException(f"All {max_retries} attempts failed.")
 
 
@@ -188,6 +189,10 @@ def send_message_nowait(
     def _send() -> None:
         try:
             send_message(message, url, endpoint, timeout=(0.5, 3.0))
+            # Import here to avoid a circular import at module load time.
+            from app.metrics import successful_forwarding_requests_total
+
+            successful_forwarding_requests_total.inc()
         except Exception:
             logger.exception("Background send to {}/{} failed", url, endpoint)
 

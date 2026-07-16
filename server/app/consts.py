@@ -16,7 +16,27 @@ QUERY_NEIGHBORS = """SELECT DISTINCT ?pod WHERE {
 }"""
 
 PHEROMONE_THRESHOLD = float(getenv("PHEROMONE_THRESHOLD", "1e-5"))
-PARAMETER_ENV_VARIABLES = {"PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"}}
+PARAMETER_ENV_VARIABLES = {
+    "PHEROMONE_EVAPORATION": {"key": "p", "default": "0.1"},
+    "W_EXPLOIT": {"key": "w_exploit", "default": "0.5"},
+    "BETA": {"key": "beta", "default": "1.0"},
+    "W_D": {"key": "w_d", "default": "0.5"},
+    "T_MAX": {"key": "t_max", "default": "3.0"},
+    "R_MAX": {"key": "r_max", "default": "10.0"},
+}
+
+# Number of distinct data items (keywords) to inject across edge nodes at setup.
+NUM_DATASETS = int(getenv("NUM_DATASETS", "1"))
+
+# Returns every dataset URI and the pod name it was placed on.
+QUERY_DATA_CATALOG = """
+SELECT ?dataset ?located_at
+WHERE {
+    GRAPH <swarm-agent:neighbors> {
+        ?dataset <swarm:isLocatedAt> ?located_at .
+    }
+}
+"""
 
 REMOVE_VISITATION_THRESHOLD = float(getenv("REMOVE_VISITATION_THRESHOLD", "86400000"))
 REMOVE_VISITATION_QUERY = f"""

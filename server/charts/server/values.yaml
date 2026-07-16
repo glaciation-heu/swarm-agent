@@ -23,6 +23,7 @@ securityContext: {}
 service:
   type: NodePort
   port: 80
+  nodePort: 30485   # pinned — must match experiment_registry.NODE_PORT
 
 resources: {}
 
@@ -44,12 +45,19 @@ readinessProbe:
 ingressHostName: swarm-agent
 
 envVariables:
-  pheromoneThreshold: 1e-5
   metadataService:
     url: metadata-service
     port: 80
-  pheromoneEvaporation: 0.1
+  pheromoneThreshold: 1e-5
   removeVisitationThreshold: 86400000
+  numDatasets: 1
+  # ACO algorithm parameters (set all to random-walk values for baseline runs)
+  pheromoneEvaporation: 0.1   # p / rho — set to 1.0 for random walk
+  wExploit: 0.5               # w_exploit — set to 0.0 for random walk
+  beta: 1.0                   # beta — set to 0.0 for random walk (τ^0=1 → uniform)
+  wD: 0.5                     # w_d — result vs. path-efficiency weight in deposit formula
+  tMax: 3.0                   # t_max — reference path cost (seconds) for deposit formula
+  rMax: 10.0                  # r_max — result count normalisation constant
 
 updateStrategy:
   type: RollingUpdate

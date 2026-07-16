@@ -14,6 +14,7 @@ from app.consts import (
     METADATA_SERVICE_PORT,
     MY_POD_NAME,
     MY_POD_NAMESPACE,
+    NUM_DATASETS,
     QUERY_NEIGHBORS,
 )
 from app.schemas import SearchResponse
@@ -226,30 +227,28 @@ def create_neighbors():
                     "\n\t\t" if len(triples) > 0 else ""
                 ) + f"<{node}> <swarm:isNeighborOf> <{neighbor}> ."
 
-        triples += "\n\t\t" + (
-            f"<{choose_edge_node(neighbors_dict, swarm_pods)}> "
-            "<swarm:hasKnowledgeOf> <swarm:Car1> ."
+        # Inject NUM_DATASETS data items on distinct edge nodes.
+        # Also write <swarm:Car{i}> <swarm:isLocatedAt> "pod_name" catalog triples
+        # so every node (and the experiment script via /api/v0/data_catalog) knows
+        # which node holds which dataset without parsing pod logs.
+        edge_pods = [
+            p for p in swarm_pods if p in neighbors_dict and len(neighbors_dict[p]) == 1
+        ]
+        chosen_nodes = random.sample(edge_pods, min(NUM_DATASETS, len(edge_pods)))
+        for i, node in enumerate(chosen_nodes, 1):
+            pod_name = node.split(":")[0]
+            triples += f"\n\t\t<{node}> <swarm:hasKnowledgeOf> <swarm:Car{i}> ."
+            triples += f"\n\t\t<swarm:Car{i}> <swarm:hasColor> <swarm:Color{i}> ."
+            triples += f'\n\t\t<swarm:Car{i}> <swarm:isLocatedAt> "{pod_name}" .'
+        logger.info(
+            f"Injected {len(chosen_nodes)} dataset(s): Car1..{len(chosen_nodes)}."
         )
-        triples += "\n\t\t" + "<swarm:Car1> <swarm:hasColor> <swarm:Blue> ."
 
         query = f"""INSERT DATA {{
 \tGRAPH <swarm-agent:neighbors> {{
 \t\t{triples}
 \t}}
 }}"""
-
-        logger.info("Clearing named graph <swarm-agent:pheromones>.")
-        response = send_request(
-            {"query": "CLEAR SILENT GRAPH <swarm-agent:pheromones>"},
-            "post",
-            "api/v0/graph/update",
-        )
-        logger.debug(f"Response: {response}")
-        if response is None or response.status_code != 200:
-            logger.error(
-                "Clearing named graph <swarm-agent:pheromones> - UNSUCCESSFUL."
-            )
-            return
 
         all_metadata_ips = find_all_metadata_service_ips()
         if not all_metadata_ips:
@@ -263,23 +262,24 @@ def create_neighbors():
             node_url = f"http://{pod_ip}:{METADATA_SERVICE_PORT}"
             logger.info(f"Writing topology to node {node_name} ({node_url}).")
 
-            response = send_request(
-                {"query": "CLEAR SILENT GRAPH <swarm-agent:neighbors>"},
-                "post",
-                "api/v0/graph/update",
-                base_url=node_url,
-            )
-            if response is None or response.status_code != 200:
-                logger.error(
-                    f"Clearing <swarm-agent:neighbors> on {node_name} - UNSUCCESSFUL."
+            for graph in ("swarm-agent:neighbors", "swarm-agent:pheromones"):
+                response = send_request(
+                    {"query": f"CLEAR SILENT GRAPH <{graph}>"},
+                    "post",
+                    "api/v0/graph/update",
+                    base_url=node_url,
                 )
-                continue
-
-            response = send_request(
-                {"query": query}, "post", "api/v0/graph/update", base_url=node_url
-            )
-            if response is None or response.status_code != 200:
-                logger.error(f"Sending neighbor list to {node_name} - UNSUCCESSFUL.")
+                if response is None or response.status_code != 200:
+                    logger.error(f"Clearing <{graph}> on {node_name} - UNSUCCESSFUL.")
+                    break
+            else:
+                response = send_request(
+                    {"query": query}, "post", "api/v0/graph/update", base_url=node_url
+                )
+                if response is None or response.status_code != 200:
+                    logger.error(
+                        f"Sending neighbor list to {node_name} - UNSUCCESSFUL."
+                    )
     else:
         logger.debug("I'm not hub")
         return

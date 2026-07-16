@@ -1,11 +1,24 @@
 from typing import Any
 
+from collections import deque
+from threading import Lock
+
 import numpy as np
 from loguru import logger
 
 from app.consts import MY_POD_IP, MY_POD_NAME
-from app.schemas import SearchResponse
+from app.metrics import data_movement_recommendations_total
+from app.schemas import DataMovementRecommendation, SearchResponse
 from app.utils import get_pheromone_table, get_swarm_agent_neighbors, send_message
+
+# Thread-safe store of recent recommendations (capped at 100 entries).
+_recommendations: deque[DataMovementRecommendation] = deque(maxlen=100)
+_recommendations_lock = Lock()
+
+
+def get_recent_recommendations() -> list[DataMovementRecommendation]:
+    with _recommendations_lock:
+        return list(_recommendations)
 
 
 class DataMovementAgent:
@@ -97,9 +110,18 @@ class DataMovementAgent:
                     no_data_movement = False
                     moving_to = self.neighbors[fulfills_condition[0]]
                     logger.info(
-                        f"Moving data from '{self.this_node}' to "
-                        f"'{moving_to['name']}'. (keyword: '{keyword}')"
+                        f"Data movement recommendation: '{self.this_node}' → "
+                        f"'{moving_to['name']}' (keyword: '{keyword}'). "
+                        "Advisory only — no data moved autonomously."
                     )
+                    rec = DataMovementRecommendation(
+                        keyword=keyword,
+                        from_node=self.this_node,
+                        to_node=moving_to["name"],
+                    )
+                    with _recommendations_lock:
+                        _recommendations.append(rec)
+                    data_movement_recommendations_total.inc()
                 elif fulfills_condition.size > 1:
                     logger.info(
                         "Multiple nodes fulfill data movement condition. "

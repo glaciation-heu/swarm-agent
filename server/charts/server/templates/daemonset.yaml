@@ -70,8 +70,20 @@ spec:
             value: "{{ .Values.envVariables.metadataService.port }}"
           - name: PHEROMONE_EVAPORATION
             value: "{{ .Values.envVariables.pheromoneEvaporation }}"
+          - name: W_EXPLOIT
+            value: "{{ .Values.envVariables.wExploit }}"
+          - name: BETA
+            value: "{{ .Values.envVariables.beta }}"
+          - name: W_D
+            value: "{{ .Values.envVariables.wD }}"
+          - name: T_MAX
+            value: "{{ .Values.envVariables.tMax }}"
+          - name: R_MAX
+            value: "{{ .Values.envVariables.rMax }}"
           - name: REMOVE_VISITATION_THRESHOLD
             value: "{{ .Values.envVariables.removeVisitationThreshold }}"
+          - name: NUM_DATASETS
+            value: "{{ .Values.envVariables.numDatasets }}"
         - name: scheduled-events
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -105,8 +117,20 @@ spec:
             value: "/code"
           - name: PHEROMONE_EVAPORATION
             value: "{{ .Values.envVariables.pheromoneEvaporation }}"
+          - name: W_EXPLOIT
+            value: "{{ .Values.envVariables.wExploit }}"
+          - name: BETA
+            value: "{{ .Values.envVariables.beta }}"
+          - name: W_D
+            value: "{{ .Values.envVariables.wD }}"
+          - name: T_MAX
+            value: "{{ .Values.envVariables.tMax }}"
+          - name: R_MAX
+            value: "{{ .Values.envVariables.rMax }}"
           - name: REMOVE_VISITATION_THRESHOLD
             value: "{{ .Values.envVariables.removeVisitationThreshold }}"
+          - name: NUM_DATASETS
+            value: "{{ .Values.envVariables.numDatasets }}"
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

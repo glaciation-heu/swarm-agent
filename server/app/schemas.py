@@ -1,7 +1,9 @@
 from typing import Annotated, Any, Dict, List, Literal
 
+from time import time as _time
+
 from fastapi import Body
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ResponseHead(BaseModel):
@@ -34,6 +36,19 @@ class Message(BaseModel):
     results: SearchResponse = EMPTY_SEARCH_RESPONSE
     time_sent: float = 0.0
     time_received: float = 0.0
+
+
+class DataMovementRecommendation(BaseModel):
+    keyword: str
+    from_node: str
+    to_node: str
+    timestamp: float = Field(default_factory=_time)
+
+
+class DataCatalogEntry(BaseModel):
+    dataset_uri: str
+    located_at: str  # pod name that holds this dataset
+    sparql_query: str  # ready-to-use query the experiment script should send
 
 
 PheromoneRequestBody = Annotated[
